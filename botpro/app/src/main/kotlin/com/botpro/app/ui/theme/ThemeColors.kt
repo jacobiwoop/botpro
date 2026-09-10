@@ -14,7 +14,7 @@ object ThemeColors {
     const val LIST_SELECTOR_SDK21 = 0x14E6F7FF.toInt() // #E6F7FF avec alpha 20 (0x14)
 
     // Barre du haut (Action Bar)
-    const val ACTION_BAR_DEFAULT = 0xFF242D39.toInt() // #242D39 (fond)
+    const val ACTION_BAR_DEFAULT = 0xFF1D2733.toInt() // #1D2733 (fond fondu avec la liste, DialogsActivity.java:3502)
     const val ACTION_BAR_DEFAULT_TITLE = 0xFFFFFFFF.toInt()
     const val ACTION_BAR_DEFAULT_ICON = 0xFFFFFFFF.toInt()
     const val ACTION_BAR_DEFAULT_SELECTOR = 0x1ECFE8FF.toInt() // #CFE8FF avec alpha 30

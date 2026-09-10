@@ -97,4 +97,10 @@
         <item name="android:textColor">@color/text_tertiary</item>
         <item name="android:textSize">12sp</item>
     </style>
+
+    <!-- FAB Circle Style (Cercle parfait 56dp) -->
+    <style name="ShapeAppearance.BotPro.FabCircle" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
 </resources>

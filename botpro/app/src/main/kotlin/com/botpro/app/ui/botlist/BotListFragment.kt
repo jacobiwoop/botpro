@@ -6,20 +6,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.botpro.app.R
+import com.botpro.app.core.utils.AndroidUtilities
 import com.botpro.app.core.utils.TypefaceManager
 import com.botpro.app.data.model.Bot
 import com.botpro.app.data.model.BotCommand
 import com.botpro.app.data.model.Conversation
 import com.botpro.app.data.model.Message
 import com.botpro.app.ui.chat.BotChatActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.shape.RelativeCornerSize
 
 /**
  * Fragment affichant la liste des conversations avec les bots.
- * Reproduit fidèlement l'interface Telegram Dialogs.
+ * Conforme à Telegram Dialogs :
+ * - Gestion des insets bord à bord (Android 15 / targetSdk 35)
+ * - En-tête sans démarcation (#1D2733)
+ * - FAB en cercle parfait (56dp)
  */
 class BotListFragment : Fragment() {
 
@@ -156,14 +165,37 @@ class BotListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Titre de l'ActionBar en police rmedium.ttf
+        // 1. Titre de l'ActionBar en police rmedium.ttf
         view.findViewById<TextView>(R.id.toolbar_title)?.apply {
             typeface = TypefaceManager.getMedium(requireContext())
         }
 
+        // 2. FAB : forcer un cercle parfait
+        val fab = view.findViewById<FloatingActionButton>(R.id.fab_new_chat)
+        fab?.shapeAppearanceModel = fab.shapeAppearanceModel.toBuilder()
+            .setAllCornerSizes(RelativeCornerSize(0.5f))
+            .build()
+
+        // 3. Gestion des insets bord à bord (WindowInsetsCompat)
+        val headerView = view.findViewById<View>(R.id.header_view)
         recyclerView = view.findViewById(R.id.recycler_view)
         emptyView = view.findViewById(R.id.empty_view)
 
+        ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            headerView?.updatePadding(top = bars.top)
+            recyclerView.updatePadding(bottom = bars.bottom)
+            fab?.let { f ->
+                val lp = f.layoutParams as? ViewGroup.MarginLayoutParams
+                if (lp != null) {
+                    lp.bottomMargin = bars.bottom + AndroidUtilities.dp(16f)
+                    f.layoutParams = lp
+                }
+            }
+            insets
+        }
+
+        // 4. RecyclerView setup
         adapter = BotListAdapter(demoConversations) { conversation ->
             val intent = Intent(requireContext(), BotChatActivity::class.java).apply {
                 putExtra("bot_id", conversation.bot.id)

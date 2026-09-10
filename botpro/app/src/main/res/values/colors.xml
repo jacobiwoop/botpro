@@ -21,7 +21,7 @@
     <color name="bg_input">#FF242D39</color>
 
     <!-- Action Bar -->
-    <color name="actionbar_bg">#FF242D39</color>
+    <color name="actionbar_bg">#FF1D2733</color>
     <color name="actionbar_title">#FFFFFFFF</color>
     <color name="actionbar_subtitle">#FF7D8B99</color>
     <color name="actionbar_icon">#FFFFFFFF</color>

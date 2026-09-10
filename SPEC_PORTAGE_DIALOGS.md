@@ -285,9 +285,39 @@ Données : `data/model/Models.kt` (`Conversation`, `Bot`, `Message`). **N'introd
 
 ### 7.2 Barre du haut
 
-Hauteur **56dp** (portrait, téléphone). Titre en `rmedium` 20dp, `actionBarDefaultTitle`, fond `actionBarDefault`.
+Hauteur **56dp** (portrait, téléphone), **plus l'inset de la barre de statut** — voir 7.6, c'est obligatoire.
+Titre en `rmedium` 20dp, couleur `actionBarDefaultTitle`.
+
+⚠️ **Fond = `windowBackgroundWhite` (`#1D2733`), PAS `actionBarDefault`.**
+`DialogsActivity.java:3502` force explicitement :
+```java
+actionBar.setBackgroundColor(getThemedColor(Theme.key_windowBackgroundWhite));
+```
+La barre se fond donc avec la liste — aucune bande de couleur distincte. Confirmé par mesure à l'écran (`#1D2733` sur toute la zone d'en-tête de Telegram).
+
 Actions : recherche, menu ⋮.
 **N'utilise pas `androidx.appcompat.widget.Toolbar`** — son rembourrage et sa typographie ne correspondent pas.
+
+### 7.6 Barres système (edge-to-edge) — obligatoire
+
+`targetSdk = 35` : Android 15 impose l'affichage bord à bord. **L'app dessine derrière la barre de statut par défaut.** Sans traitement, l'en-tête passe sous l'heure et la batterie.
+
+Mesuré sur l'appareil de test : barre de statut = **111px = 40,36dp**. Ne code pas cette valeur en dur, elle varie d'un appareil à l'autre — lis l'inset :
+
+```kotlin
+ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+    val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+    header.updatePadding(top = bars.top)     // décale le contenu de l'en-tête
+    list.updatePadding(bottom = bars.bottom) // la liste défile sous la barre de navigation
+    insets
+}
+```
+
+Règles :
+- Le **fond** de l'en-tête s'étend derrière la barre de statut (pas de bande vide en haut).
+- Le **contenu** de l'en-tête (titre, icônes) est décalé vers le bas de `bars.top`.
+- Hauteur totale de l'en-tête = `bars.top + dp(56)`.
+- La liste garde `clipToPadding = false` pour défiler sous la barre de navigation.
 
 ### 7.3 Liste
 
