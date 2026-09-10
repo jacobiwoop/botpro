@@ -1,0 +1,51 @@
+name: Build BotPro APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build BotPro Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make Gradle Executable
+        run: |
+          if [ -f "botpro/gradlew" ]; then
+            chmod +x botpro/gradlew
+          elif [ -f "gradlew" ]; then
+            chmod +x gradlew
+          fi
+
+      - name: Build BotPro Debug APK
+        run: |
+          if [ -d "botpro" ]; then
+            cd botpro && ./gradlew assembleDebug --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: Upload BotPro APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BotPro-APK
+          path: |
+            botpro/app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

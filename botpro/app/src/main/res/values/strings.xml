@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BotPro</string>
+
+    <!-- Navigation -->
+    <string name="tab_bots">Bots</string>
+    <string name="tab_explore">Explorer</string>
+    <string name="tab_settings">Paramètres</string>
+
+    <!-- Chat -->
+    <string name="chat_input_hint">Écrire un message…</string>
+    <string name="chat_send">Envoyer</string>
+    <string name="chat_attach">Joindre</string>
+    <string name="chat_commands">Commandes</string>
+    <string name="chat_bot_keyboard">Clavier du bot</string>
+    <string name="chat_typing">en train d\'écrire…</string>
+    <string name="chat_online">en ligne</string>
+    <string name="chat_offline">hors ligne</string>
+
+    <!-- Bot List -->
+    <string name="bot_list_title">Mes Bots</string>
+    <string name="bot_list_empty">Aucun bot pour le moment</string>
+    <string name="bot_list_empty_subtitle">Ajoutez votre premier bot pour commencer</string>
+    <string name="bot_add">Ajouter un bot</string>
+    <string name="bot_create">Créer un bot</string>
+    <string name="bot_delete">Supprimer</string>
+
+    <!-- Bot Profile -->
+    <string name="bot_profile_title">Profil du Bot</string>
+    <string name="bot_profile_description">Description</string>
+    <string name="bot_profile_commands">Commandes disponibles</string>
+    <string name="bot_profile_start">Démarrer</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_theme">Thème</string>
+    <string name="settings_theme_light">Clair</string>
+    <string name="settings_theme_dark">Sombre</string>
+    <string name="settings_theme_darkblue">Bleu Nuit</string>
+    <string name="settings_theme_arctic">Arctique</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_data">Données et stockage</string>
+    <string name="settings_about">À propos</string>
+    <string name="settings_version">Version</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Annuler</string>
+    <string name="search">Rechercher</string>
+    <string name="loading">Chargement…</string>
+    <string name="error_network">Erreur de connexion</string>
+    <string name="error_generic">Une erreur est survenue</string>
+</resources>

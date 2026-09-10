@@ -1,0 +1,47 @@
+name: Build Telegram APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    name: Build Telegram Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Install Android NDK 27.2.12479018 & SDK components
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.2.12479018" "build-tools;36.0.0" "platforms;android-36"
+
+      - name: Set Execute Permissions for Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Build Telegram Debug APK
+        run: ./gradlew assembleAfatDebug -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g" --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Telegram-APK
+          path: |
+            TMessagesProj_App/build/outputs/apk/**/*.apk
+            TMessagesProj/build/outputs/apk/**/*.apk
+          if-no-files-found: error

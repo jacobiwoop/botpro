@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Écran de chat bot (reproduit ChatActivity de Telegram) -->
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_chat">
+
+    <!-- ═══ Action Bar (en-tête du chat comme Telegram) ═══ -->
+    <RelativeLayout
+        android:id="@+id/chat_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/actionbar_bg"
+        android:elevation="2dp"
+        android:paddingEnd="8dp">
+
+        <!-- Bouton retour -->
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
+            android:padding="12dp"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Retour"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <!-- Avatar du bot dans l'en-tête -->
+        <FrameLayout
+            android:id="@+id/toolbar_avatar_container"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/btn_back"
+            android:layout_marginStart="4dp">
+
+            <View
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@color/brand_primary" />
+
+            <TextView
+                android:id="@+id/toolbar_avatar_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textColor="#FFFFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="A" />
+        </FrameLayout>
+
+        <!-- Nom et statut du bot -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/toolbar_avatar_container"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/actionbar_title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Assistant IA" />
+
+            <TextView
+                android:id="@+id/toolbar_subtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/actionbar_subtitle"
+                android:textSize="13sp"
+                tools:text="en ligne" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- ═══ Zone des messages (RecyclerView) ═══ -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chat_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/chat_input_container"
+        android:layout_below="@id/chat_toolbar"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:scrollbars="vertical" />
+
+    <!-- ═══ Conteneur du clavier de bot (optionnel) ═══ -->
+    <LinearLayout
+        android:id="@+id/bot_keyboard_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/chat_input_container"
+        android:background="@color/bot_keyboard_bg"
+        android:orientation="vertical"
+        android:padding="4dp"
+        android:visibility="gone" />
+
+    <!-- ═══ Barre de saisie (comme ChatActivity) ═══ -->
+    <LinearLayout
+        android:id="@+id/chat_input_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="@color/bg_surface_elevated"
+        android:gravity="center_vertical"
+        android:minHeight="48dp"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp">
+
+        <!-- Bouton emoji -->
+        <ImageView
+            android:id="@+id/btn_emoji"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="10dp"
+            android:src="@android:drawable/sym_def_app_icon"
+            android:contentDescription="Emoji"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <!-- Champ de saisie -->
+        <EditText
+            android:id="@+id/chat_input_field"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@color/bg_input"
+            android:hint="@string/chat_input_hint"
+            android:maxLines="6"
+            android:minHeight="40dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_tertiary"
+            android:textSize="16sp" />
+
+        <!-- Bouton pièce jointe -->
+        <ImageView
+            android:id="@+id/btn_attach"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="10dp"
+            android:src="@android:drawable/ic_menu_add"
+            android:contentDescription="@string/chat_attach"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+
+        <!-- Bouton envoyer -->
+        <ImageView
+            android:id="@+id/btn_send"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:padding="10dp"
+            android:src="@android:drawable/ic_menu_send"
+            android:contentDescription="@string/chat_send"
+            android:background="?attr/selectableItemBackgroundBorderless" />
+    </LinearLayout>
+
+</RelativeLayout>

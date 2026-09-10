@@ -1,0 +1,17 @@
+# Telegram source (kept locally as reference, not re-uploaded)
+Telegram/
+apk_build/
+
+# Gradle & Build caches
+.gradle/
+build/
+*/build/
+*.iml
+.idea/
+local.properties
+.DS_Store
+
+# Android studio
+captures/
+.externalNativeBuild/
+.cxx/
