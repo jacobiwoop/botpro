@@ -24,13 +24,13 @@
     </style>
 
     <!-- ActionBar Style -->
-    <style name="BotPro.ActionBar">
+    <style name="BotPro_ActionBar" parent="">
         <item name="android:background">@color/actionbar_bg</item>
         <item name="android:elevation">0dp</item>
     </style>
 
     <!-- Chat Input Style -->
-    <style name="BotPro.ChatInput">
+    <style name="BotPro_ChatInput" parent="">
         <item name="android:background">@color/bg_input</item>
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textColorHint">@color/text_tertiary</item>
@@ -42,7 +42,7 @@
     </style>
 
     <!-- Bot Keyboard Button Style -->
-    <style name="BotPro.BotKeyboardButton">
+    <style name="BotPro_BotKeyboardButton" parent="">
         <item name="android:background">@color/bot_keyboard_button</item>
         <item name="android:textColor">@color/bot_keyboard_button_text</item>
         <item name="android:textSize">14sp</item>
@@ -54,7 +54,7 @@
     </style>
 
     <!-- Dialog List Item Style -->
-    <style name="BotPro.DialogItem">
+    <style name="BotPro_DialogItem" parent="">
         <item name="android:background">?attr/selectableItemBackground</item>
         <item name="android:paddingStart">16dp</item>
         <item name="android:paddingEnd">16dp</item>
@@ -63,37 +63,37 @@
     </style>
 
     <!-- Message Bubble Out -->
-    <style name="BotPro.Bubble.Out">
+    <style name="BotPro_Bubble_Out" parent="">
         <item name="android:background">@color/bubble_out</item>
         <item name="android:textColor">@color/text_on_bubble_out</item>
         <item name="android:textSize">16sp</item>
     </style>
 
     <!-- Message Bubble In -->
-    <style name="BotPro.Bubble.In">
+    <style name="BotPro_Bubble_In" parent="">
         <item name="android:background">@color/bubble_in</item>
         <item name="android:textColor">@color/text_on_bubble_in</item>
         <item name="android:textSize">16sp</item>
     </style>
 
     <!-- Text Appearances -->
-    <style name="BotPro.TextAppearance.Title" parent="TextAppearance.Material3.TitleLarge">
+    <style name="BotPro_TextAppearance_Title" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">20sp</item>
         <item name="fontFamily">sans-serif-medium</item>
     </style>
 
-    <style name="BotPro.TextAppearance.Subtitle" parent="TextAppearance.Material3.TitleMedium">
+    <style name="BotPro_TextAppearance_Subtitle" parent="TextAppearance.Material3.TitleMedium">
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="BotPro.TextAppearance.Body" parent="TextAppearance.Material3.BodyLarge">
+    <style name="BotPro_TextAppearance_Body" parent="TextAppearance.Material3.BodyLarge">
         <item name="android:textColor">@color/text_primary</item>
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="BotPro.TextAppearance.Caption" parent="TextAppearance.Material3.BodySmall">
+    <style name="BotPro_TextAppearance_Caption" parent="TextAppearance.Material3.BodySmall">
         <item name="android:textColor">@color/text_tertiary</item>
         <item name="android:textSize">12sp</item>
     </style>
