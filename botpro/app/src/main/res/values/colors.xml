@@ -1,94 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- ═══════════════════════════════════════════════════════
-         BotPro Color System
-         Reproduit fidèlement les couleurs de Telegram Dark Blue
+         BotPro Color System — Telegram Dark Blue Exact Values
          ═══════════════════════════════════════════════════════ -->
 
-    <!-- Primary Brand -->
-    <color name="brand_primary">#FF2AABEE</color>
-    <color name="brand_primary_dark">#FF229ED9</color>
-    <color name="brand_accent">#FF4EA4F6</color>
+    <!-- Primary Brand & FAB -->
+    <color name="brand_primary">#FF5FA3DE</color>
+    <color name="brand_primary_dark">#FF569DD6</color>
+    <color name="brand_accent">#FF64B5EF</color>
 
     <!-- Backgrounds -->
-    <color name="bg_window">#FF17212B</color>
-    <color name="bg_surface">#FF17212B</color>
-    <color name="bg_surface_elevated">#FF1D2733</color>
-    <color name="bg_chat">#FF0E1621</color>
-    <color name="bg_input">#FF242F3D</color>
-    <color name="bg_header">#FF17212B</color>
-    <color name="bg_tab_bar">#FF17212B</color>
+    <color name="bg_window">#FF1D2733</color>
+    <color name="bg_surface">#FF1D2733</color>
+    <color name="bg_surface_elevated">#FF242D39</color>
+    <color name="bg_chat">#FF151E27</color>
+    <color name="bg_header">#FF242D39</color>
+    <color name="bg_tab_bar">#FF1D2733</color>
     <color name="bg_dialog">#FF1D2733</color>
-    <color name="bg_splash">#FF2AABEE</color>
+    <color name="bg_splash">#FF5FA3DE</color>
+    <color name="bg_input">#FF242D39</color>
 
-    <!-- Message Bubbles -->
-    <color name="bubble_out">#FF2B5278</color>
-    <color name="bubble_out_gradient">#FF2B5278</color>
-    <color name="bubble_in">#FF182533</color>
-    <color name="bubble_out_selected">#FF3A6A97</color>
-    <color name="bubble_in_selected">#FF1E3246</color>
+    <!-- Action Bar -->
+    <color name="actionbar_bg">#FF242D39</color>
+    <color name="actionbar_title">#FFFFFFFF</color>
+    <color name="actionbar_subtitle">#FF7D8B99</color>
+    <color name="actionbar_icon">#FFFFFFFF</color>
+    <color name="actionbar_selector">#1ECFE8FF</color>
+    <color name="actionbar_search_placeholder">#78DCF4FF</color>
 
     <!-- Text Colors -->
     <color name="text_primary">#FFFFFFFF</color>
-    <color name="text_secondary">#FF8B9CAB</color>
-    <color name="text_tertiary">#FF6D7F8F</color>
-    <color name="text_link">#FF71BAEA</color>
-    <color name="text_accent">#FF4EA4F6</color>
-    <color name="text_on_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FF7D8B99</color>
+    <color name="text_tertiary">#FF737F8B</color>
+    <color name="dialog_name">#FFE9EEF4</color>
+    <color name="dialog_message">#FF7D8B99</color>
+    <color name="dialog_date">#FF737F8B</color>
+    <color name="dialog_draft">#D9FC474A</color>
+
+    <!-- Dividers & Borders -->
+    <color name="divider">#95000000</color>
+
+    <!-- Status & Badges -->
+    <color name="status_online">#FF4BCB1C</color>
+    <color name="unread_badge">#FF64B5EF</color>
+    <color name="unread_badge_muted">#FF3E5263</color>
+    <color name="unread_badge_text">#FFFFFFFF</color>
+
+    <!-- Touch Selector -->
+    <color name="list_selector">#14E6F7FF</color>
+    <color name="icon_accent">#FF64B5EF</color>
+
+    <!-- FAB -->
+    <color name="fab_bg">#FF5FA3DE</color>
+    <color name="fab_pressed">#FF569DD6</color>
+    <color name="fab_icon">#FFFFFFFF</color>
+
+    <!-- Chat Bubbles & Bot UI (pour les autres écrans) -->
+    <color name="bubble_out">#FF2B5278</color>
+    <color name="bubble_in">#FF182533</color>
     <color name="text_on_bubble_out">#FFFFFFFF</color>
     <color name="text_on_bubble_in">#FFFFFFFF</color>
     <color name="text_time_out">#FF7DA4CC</color>
     <color name="text_time_in">#FF546A7B</color>
-
-    <!-- Icons -->
-    <color name="icon_primary">#FFFFFFFF</color>
-    <color name="icon_secondary">#FF8B9CAB</color>
-    <color name="icon_accent">#FF4EA4F6</color>
-    <color name="icon_chat_input">#FF8B9CAB</color>
-    <color name="icon_send">#FF4EA4F6</color>
-
-    <!-- Dividers & Borders -->
-    <color name="divider">#FF121C25</color>
-    <color name="divider_light">#1AFFFFFF</color>
-
-    <!-- Status & Indicators -->
-    <color name="status_online">#FF4DCA43</color>
-    <color name="status_typing">#FF4EA4F6</color>
-    <color name="check_read">#FF4DA6EA</color>
-    <color name="check_sent">#FF5E7E92</color>
-    <color name="unread_badge">#FF4EA4F6</color>
-    <color name="unread_badge_muted">#FF546778</color>
-
-    <!-- Action Bar -->
-    <color name="actionbar_bg">#FF17212B</color>
-    <color name="actionbar_title">#FFD5E8F7</color>
-    <color name="actionbar_subtitle">#FF7E919E</color>
-    <color name="actionbar_icon">#FF8BACC1</color>
-
-    <!-- Dialog List -->
-    <color name="dialog_name">#FFFFFFFF</color>
-    <color name="dialog_message">#FF6E8797</color>
-    <color name="dialog_message_draft">#FFDD4B39</color>
-    <color name="dialog_date">#FF5B7E99</color>
-    <color name="dialog_pinned_bg">#FF1C2936</color>
-
-    <!-- Bot Specific -->
     <color name="bot_keyboard_bg">#FF1D2733</color>
     <color name="bot_keyboard_button">#FF2B3E50</color>
-    <color name="bot_keyboard_button_pressed">#FF364D63</color>
     <color name="bot_keyboard_button_text">#FFFFFFFF</color>
-    <color name="bot_inline_result_bg">#FF1D2733</color>
-    <color name="bot_command_text">#FF4EA4F6</color>
-
-    <!-- Semantic Colors -->
-    <color name="color_danger">#FFEF5350</color>
-    <color name="color_success">#FF4CAF50</color>
-    <color name="color_warning">#FFFFA726</color>
-
-    <!-- Ripple & Touch -->
-    <color name="ripple_light">#1AFFFFFF</color>
-    <color name="ripple_dark">#33000000</color>
-
-    <!-- ═══ Light Theme Override ═══ -->
-    <!-- (pour thème jour, à mettre dans values/colors_light.xml si besoin) -->
+    <color name="check_read">#FF46AA36</color>
+    <color name="check_sent">#FF64B5EF</color>
 </resources>

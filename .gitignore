@@ -15,3 +15,9 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Reference & private captures
+reference/
+*.png
+apk_botpro/
+

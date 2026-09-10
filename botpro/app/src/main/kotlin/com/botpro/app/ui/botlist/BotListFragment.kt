@@ -5,30 +5,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.botpro.app.R
+import com.botpro.app.core.utils.TypefaceManager
 import com.botpro.app.data.model.Bot
 import com.botpro.app.data.model.BotCommand
 import com.botpro.app.data.model.Conversation
 import com.botpro.app.data.model.Message
-import com.botpro.app.data.model.MessageType
 import com.botpro.app.ui.chat.BotChatActivity
 
 /**
  * Fragment affichant la liste des conversations avec les bots.
- * Basé sur `DialogsActivity` de Telegram (14 435 lignes Java),
- * réécrit en Kotlin avec les mêmes patterns visuels :
- * - Avatar rond à gauche
- * - Nom du bot + dernier message
- * - Badge de messages non lus
- * - Heure du dernier message à droite
- *
- * Correspond visuellement à l'écran principal de Telegram
- * (liste des conversations), mais n'affiche que des bots.
+ * Reproduit fidèlement l'interface Telegram Dialogs.
  */
 class BotListFragment : Fragment() {
 
@@ -36,7 +27,7 @@ class BotListFragment : Fragment() {
     private lateinit var emptyView: View
     private lateinit var adapter: BotListAdapter
 
-    // Données de démonstration (à remplacer par le repository)
+    // Données de démonstration réalistes pour valider les mesures
     private val demoConversations = listOf(
         Conversation(
             bot = Bot(
@@ -44,11 +35,7 @@ class BotListFragment : Fragment() {
                 name = "Assistant IA",
                 username = "assistant_bot",
                 description = "Un assistant intelligent qui répond à toutes vos questions",
-                commands = listOf(
-                    BotCommand("/start", "Démarrer la conversation"),
-                    BotCommand("/help", "Afficher l'aide"),
-                    BotCommand("/settings", "Paramètres du bot")
-                ),
+                commands = listOf(BotCommand("/start", "Démarrer"), BotCommand("/help", "Aide")),
                 isOnline = true
             ),
             lastMessage = Message(
@@ -62,15 +49,10 @@ class BotListFragment : Fragment() {
         Conversation(
             bot = Bot(
                 id = "2",
-                name = "Traducteur",
+                name = "Traducteur Universel",
                 username = "translator_bot",
-                description = "Traduit instantanément dans plus de 50 langues",
-                commands = listOf(
-                    BotCommand("/start", "Démarrer"),
-                    BotCommand("/lang", "Choisir la langue"),
-                    BotCommand("/detect", "Détecter la langue")
-                ),
-                isOnline = true
+                description = "Traduction instantanée multilingue",
+                isOnline = false
             ),
             lastMessage = Message(
                 botId = "2",
@@ -85,17 +67,61 @@ class BotListFragment : Fragment() {
                 id = "3",
                 name = "Météo Pro",
                 username = "weather_bot",
-                description = "Prévisions météo précises pour toutes les villes du monde",
-                commands = listOf(
-                    BotCommand("/start", "Démarrer"),
-                    BotCommand("/now", "Météo actuelle"),
-                    BotCommand("/forecast", "Prévisions 7 jours")
-                ),
+                description = "Prévisions météo mondiales",
                 isOnline = false
             ),
             lastMessage = Message(
                 botId = "3",
                 text = "Paris : 22°C, Ensoleillé ☀️",
+                isOutgoing = false,
+                timestamp = System.currentTimeMillis() - 7200_000
+            ),
+            unreadCount = 0
+        ),
+        Conversation(
+            bot = Bot(
+                id = "4",
+                name = "Rappels & Tâches",
+                username = "reminder_bot",
+                description = "Gestionnaire de rappels",
+                isOnline = true
+            ),
+            lastMessage = Message(
+                botId = "4",
+                text = "⏰ Rappel : Réunion dans 30 minutes",
+                isOutgoing = false,
+                timestamp = System.currentTimeMillis() - 14400_000
+            ),
+            unreadCount = 1
+        ),
+        // Cellule 4 : cible de mesure du script tools/measure_cell.py
+        Conversation(
+            bot = Bot(
+                id = "5",
+                name = "BotPro Notifications",
+                username = "botpro_notifications_bot",
+                description = "Notifications officielles BotPro",
+                isOnline = true
+            ),
+            lastMessage = Message(
+                botId = "5",
+                text = "Code de connexion web. Ne le partagez jamais.",
+                isOutgoing = false,
+                timestamp = System.currentTimeMillis() - 28800_000
+            ),
+            unreadCount = 1
+        ),
+        Conversation(
+            bot = Bot(
+                id = "6",
+                name = "Générateur d'Images",
+                username = "image_gen_bot",
+                description = "Création d'images IA",
+                isOnline = false
+            ),
+            lastMessage = Message(
+                botId = "6",
+                text = "Votre image haute résolution est prête !",
                 isOutgoing = false,
                 timestamp = System.currentTimeMillis() - 86400_000
             ),
@@ -103,24 +129,19 @@ class BotListFragment : Fragment() {
         ),
         Conversation(
             bot = Bot(
-                id = "4",
-                name = "Rappels",
-                username = "reminder_bot",
-                description = "Planifiez vos rappels et ne manquez plus rien",
-                commands = listOf(
-                    BotCommand("/start", "Démarrer"),
-                    BotCommand("/new", "Nouveau rappel"),
-                    BotCommand("/list", "Liste des rappels")
-                ),
+                id = "7",
+                name = "Calculateur Financier",
+                username = "finance_bot",
+                description = "Suivi des devises et cryptos",
                 isOnline = true
             ),
             lastMessage = Message(
-                botId = "4",
-                text = "⏰ Rappel : Réunion dans 30 minutes",
+                botId = "7",
+                text = "BTC : 89 450 $ (+3.2%)",
                 isOutgoing = false,
-                timestamp = System.currentTimeMillis() - 1800_000
+                timestamp = System.currentTimeMillis() - 172800_000
             ),
-            unreadCount = 1
+            unreadCount = 5
         )
     )
 
@@ -135,15 +156,15 @@ class BotListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Action bar title
-        view.findViewById<TextView>(R.id.toolbar_title)?.text = getString(R.string.bot_list_title)
+        // Titre de l'ActionBar en police rmedium.ttf
+        view.findViewById<TextView>(R.id.toolbar_title)?.apply {
+            typeface = TypefaceManager.getMedium(requireContext())
+        }
 
-        // RecyclerView setup (comme DialogsActivity)
         recyclerView = view.findViewById(R.id.recycler_view)
         emptyView = view.findViewById(R.id.empty_view)
 
         adapter = BotListAdapter(demoConversations) { conversation ->
-            // Navigation vers le chat (comme DialogsActivity -> ChatActivity)
             val intent = Intent(requireContext(), BotChatActivity::class.java).apply {
                 putExtra("bot_id", conversation.bot.id)
                 putExtra("bot_name", conversation.bot.name)
@@ -156,7 +177,6 @@ class BotListFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
-        // Toggle empty state
         if (demoConversations.isEmpty()) {
             recyclerView.visibility = View.GONE
             emptyView.visibility = View.VISIBLE
