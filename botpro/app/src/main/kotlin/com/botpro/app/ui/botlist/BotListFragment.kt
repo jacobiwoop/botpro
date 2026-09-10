@@ -39,6 +39,16 @@ class BotListFragment : Fragment() {
     // Données de démonstration réalistes pour valider les mesures
     private val demoConversations = listOf(
         Conversation(
+            bot = ConversationFixtures.DEMO_BOT,
+            lastMessage = Message(
+                botId = ConversationFixtures.DEMO_BOT.id,
+                text = "gateway.stop.stopped",
+                isOutgoing = false,
+                timestamp = System.currentTimeMillis() - 30_000
+            ),
+            unreadCount = 1
+        ),
+        Conversation(
             bot = Bot(
                 id = "1",
                 name = "Assistant IA",

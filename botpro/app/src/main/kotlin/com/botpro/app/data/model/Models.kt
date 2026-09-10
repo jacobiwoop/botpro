@@ -31,20 +31,51 @@ data class BotCommand(
 )
 
 /**
+ * Information sur un message cité en réponse (Quote / Reply).
+ */
+data class MessageReplyInfo(
+    val authorName: String,
+    val text: String
+)
+
+/**
+ * Information sur un message transféré.
+ */
+data class MessageForwardInfo(
+    val authorName: String
+)
+
+/**
+ * Information sur un document attaché.
+ */
+data class MessageDocumentInfo(
+    val fileName: String,
+    val fileSizeString: String,
+    val extension: String = ""
+)
+
+/**
  * Message dans une conversation avec un bot.
  * Correspond au `MessageObject` de Telegram,
- * simplifié pour l'usage bot uniquement.
+ * simplifié pour l'usage bot uniquement (sans types TLRPC).
  */
 data class Message(
     val id: String = UUID.randomUUID().toString(),
-    val botId: String,
-    val text: String,
-    val isOutgoing: Boolean,
+    val botId: String = "",
+    val text: String = "",
+    val isOutgoing: Boolean = false,
     val timestamp: Long = System.currentTimeMillis(),
     val type: MessageType = MessageType.TEXT,
     val replyMarkup: ReplyMarkup? = null,
     val mediaUrl: String? = null,
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    val isGroupedTop: Boolean = false,
+    val isGroupedBottom: Boolean = false,
+    val replyInfo: MessageReplyInfo? = null,
+    val forwardInfo: MessageForwardInfo? = null,
+    val documentInfo: MessageDocumentInfo? = null,
+    val isDateSeparator: Boolean = false,
+    val isSelected: Boolean = false
 )
 
 /**
@@ -58,7 +89,8 @@ enum class MessageType {
     VOICE,
     STICKER,
     BOT_COMMAND,
-    SYSTEM
+    SYSTEM,
+    DATE_SEPARATOR
 }
 
 /**
