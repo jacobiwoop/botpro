@@ -11,15 +11,18 @@
 
 set -u
 NAME="${1:-capture}"
-DEV="192.168.1.14:5555"
+DEV="${ADB_DEV:-$(adb devices | grep -m1 -E '^[0-9.:]+\s+device' | cut -f1)}"
+if [ -z "$DEV" ]; then
+  DEV="10.114.186.204:5555"
+  adb connect "$DEV" >/dev/null 2>&1
+fi
 OUT="reference/conversation/captures"
 mkdir -p "$OUT"
 
-adb connect "$DEV" >/dev/null 2>&1
-adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
+adb -s "$DEV" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
 sleep 0.5
 
-if ! adb shell true >/dev/null 2>&1; then
+if ! adb -s "$DEV" shell true >/dev/null 2>&1; then
   echo "appareil injoignable — vérifie le wifi et le débogage sans fil"
   exit 1
 fi

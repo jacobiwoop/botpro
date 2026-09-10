@@ -62,7 +62,7 @@ class BotKeyboardView @JvmOverloads constructor(
                 val label = row[colIndex]
                 val bgDrawable = GradientDrawable().apply {
                     setColor(ThemeColors.BOT_KEYBOARD_BUTTON)
-                    cornerRadius = cornerRadius
+                    setCornerRadius(dp(6f).toFloat())
                 }
 
                 val textView = TextView(context).apply {

@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.botpro.app.R
 import com.botpro.app.core.utils.AndroidUtilities
 import com.botpro.app.core.utils.TypefaceManager
+import com.botpro.app.data.fixtures.ConversationFixtures
 import com.botpro.app.data.model.Bot
 import com.botpro.app.data.model.BotCommand
 import com.botpro.app.data.model.Conversation
