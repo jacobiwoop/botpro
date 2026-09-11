@@ -53,6 +53,13 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: '#17212b' },
             }}
           />
+          <Stack.Screen
+            name="auth"
+            options={{
+              animation: 'fade',
+              contentStyle: { backgroundColor: '#17212b' },
+            }}
+          />
         </Stack>
       </ThemeProvider>
     </SafeAreaProvider>

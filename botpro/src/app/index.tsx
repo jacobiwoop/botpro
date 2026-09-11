@@ -9,7 +9,7 @@ import { DrawerMenu } from '@/components/telegram/DrawerMenu';
 import { CHAT_LIST_DATA } from '@/data/chatData';
 import { TelegramColors } from '@/constants/telegramTheme';
 import { ChatItem } from '@/types/chat';
-import { fetchChats, subscribeToRealtimeMessages, ApiChat } from '@/services/api';
+import { fetchChats, subscribeToRealtimeMessages, ApiChat, getStoredToken } from '@/services/api';
 
 export default function ChatListScreen() {
   const router = useRouter();
@@ -42,7 +42,15 @@ export default function ChatListScreen() {
   }, []);
 
   useEffect(() => {
-    loadChats();
+    const checkAuth = async () => {
+      const token = await getStoredToken();
+      if (!token) {
+        router.replace('/auth');
+        return;
+      }
+      loadChats();
+    };
+    checkAuth();
 
     // S'abonner aux nouveaux messages via WebSocket pour mise à jour immédiate de la liste
     const unsubscribe = subscribeToRealtimeMessages((msg) => {

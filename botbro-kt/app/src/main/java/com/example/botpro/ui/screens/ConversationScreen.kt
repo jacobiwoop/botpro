@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -57,7 +59,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ConversationScreen(
     contactName: String = "Hernes Dav",
@@ -138,6 +140,14 @@ fun ConversationScreen(
     LaunchedEffect(Unit) {
         if (messages.isNotEmpty()) {
             listState.scrollToItem(messages.size - 1)
+        }
+    }
+
+    // Défilement automatique vers le bas à l'ouverture du clavier
+    val isImeVisible = WindowInsets.isImeVisible
+    LaunchedEffect(isImeVisible) {
+        if (isImeVisible && messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
         }
     }
 

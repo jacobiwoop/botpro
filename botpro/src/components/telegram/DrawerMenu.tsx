@@ -21,6 +21,7 @@ import {
   MaterialCommunityIcons,
 } from '@expo/vector-icons';
 import { TelegramColors } from '@/constants/telegramTheme';
+import { getStoredUser, clearAuthSession, ApiUser } from '@/services/api';
 
 interface DrawerMenuProps {
   visible: boolean;
@@ -33,9 +34,18 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   // Couvre de gauche à presque la fin (85% de l'écran, laissant une tranche à droite comme sur Telegram)
   const drawerWidth = Math.round(screenWidth * 0.85);
 
+  const [currentUser, setCurrentUser] = useState<ApiUser | null>(null);
   const [showAccounts, setShowAccounts] = useState(true);
   const [isNightMode, setIsNightMode] = useState(true);
   const [showModal, setShowModal] = useState(visible);
+
+  useEffect(() => {
+    if (visible) {
+      getStoredUser().then((u) => {
+        if (u) setCurrentUser(u);
+      });
+    }
+  }, [visible]);
 
   // Valeurs animées pour la translation et l'opacité
   const slideAnim = useRef(new Animated.Value(-drawerWidth)).current;
@@ -80,6 +90,24 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
       });
     }
   }, [visible, drawerWidth]);
+
+  const initials = currentUser
+    ? (currentUser.first_name[0] + (currentUser.last_name ? currentUser.last_name[0] : '')).toUpperCase()
+    : 'DL';
+
+  const displayName = currentUser
+    ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim()
+    : 'darren lee';
+
+  const displaySubtitle = currentUser
+    ? (currentUser.username ? `@${currentUser.username}` : currentUser.email)
+    : '+44 7354 224381';
+
+  const handleLogout = async () => {
+    await clearAuthSession();
+    onClose();
+    router.replace('/auth');
+  };
 
   const handleClose = () => {
     Animated.parallel([
@@ -127,9 +155,9 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
             <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
               {/* En-tête profil utilisateur */}
               <View style={styles.profileHeader}>
-                {/* Grand avatar DL */}
+                {/* Grand avatar */}
                 <View style={styles.largeAvatar}>
-                  <Text style={styles.largeAvatarText}>DL</Text>
+                  <Text style={styles.largeAvatarText}>{initials}</Text>
                 </View>
 
                 {/* Nom, numéro et flèche de bascule */}
@@ -140,9 +168,9 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
                 >
                   <View style={styles.nameAndPhone}>
                     <Text style={styles.profileName} numberOfLines={1}>
-                      darren lee
+                      {displayName}
                     </Text>
-                    <Text style={styles.profilePhone}>+44 7354 224381</Text>
+                    <Text style={styles.profilePhone}>{displaySubtitle}</Text>
                   </View>
                   <Feather
                     name={showAccounts ? 'chevron-up' : 'chevron-down'}
@@ -159,21 +187,21 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
                   <TouchableOpacity style={styles.accountRow} activeOpacity={0.7}>
                     <View style={styles.smallAvatarWrapper}>
                       <View style={styles.smallAvatar}>
-                        <Text style={styles.smallAvatarText}>DL</Text>
+                        <Text style={styles.smallAvatarText}>{initials}</Text>
                       </View>
                       <View style={styles.accountCheckBadge}>
                         <MaterialIcons name="check" size={10} color="#ffffff" />
                       </View>
                     </View>
-                    <Text style={styles.accountName}>darren lee</Text>
+                    <Text style={styles.accountName}>{displayName}</Text>
                   </TouchableOpacity>
 
                   {/* Bouton Ajouter un compte */}
-                  <TouchableOpacity style={styles.accountRow} activeOpacity={0.7}>
+                  <TouchableOpacity style={styles.accountRow} activeOpacity={0.7} onPress={handleLogout}>
                     <View style={styles.addAccountIconWrapper}>
                       <Feather name="plus" size={18} color="#8596a7" />
                     </View>
-                    <Text style={styles.menuItemText}>Add Account</Text>
+                    <Text style={styles.menuItemText}>Switch Account</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -247,6 +275,20 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
                   thumbColor={isNightMode ? '#ffffff' : '#f4f3f4'}
                 />
               </View>
+
+              <View style={styles.divider} />
+
+              {/* Déconnexion */}
+              <TouchableOpacity
+                style={styles.menuItem}
+                activeOpacity={0.7}
+                onPress={handleLogout}
+              >
+                <Ionicons name="log-out-outline" size={22} color="#e17076" style={styles.menuIcon} />
+                <Text style={[styles.menuItemText, { color: '#e17076', fontWeight: '600' }]}>
+                  Log Out
+                </Text>
+              </TouchableOpacity>
             </ScrollView>
           </SafeAreaView>
         </Animated.View>
