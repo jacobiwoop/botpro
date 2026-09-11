@@ -4,13 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,8 +27,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.example.botpro.data.mock.MockData
 import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
@@ -40,6 +55,7 @@ fun ConversationScreen(
     modifier: Modifier = Modifier
 ) {
     var messages by remember { mutableStateOf(MockData.conversationMessages) }
+    var selectedImageUrl by remember { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -50,6 +66,23 @@ fun ConversationScreen(
             type = MessageType.TEXT,
             isOutgoing = true,
             text = text,
+            time = currentTime,
+            isDoubleCheck = false
+        )
+        messages = messages + newMessage
+        scope.launch {
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    val onSendImage: (String) -> Unit = { url ->
+        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val newMessage = Message(
+            id = "msg_${System.currentTimeMillis()}",
+            type = MessageType.IMAGE,
+            isOutgoing = true,
+            imageUrl = url,
+            text = "Tokyo Tower 🗼",
             time = currentTime,
             isDoubleCheck = false
         )
@@ -70,9 +103,8 @@ fun ConversationScreen(
         modifier = modifier
             .fillMaxSize()
             .background(TelegramColors.ChatBackground)
-            .imePadding()
     ) {
-        // En-tête avec couleur dédiée sous la barre d'état
+        // En-tête fixe avec couleur dédiée sous la barre d'état
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,18 +124,61 @@ fun ConversationScreen(
             state = listState,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxSize(),
+                .fillMaxWidth(),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(
                 items = messages,
                 key = { it.id }
             ) { message ->
-                MessageBubble(message = message)
+                MessageBubble(
+                    message = message,
+                    onImageClick = { selectedImageUrl = it }
+                )
             }
         }
 
-        // Barre de saisie inférieure
-        ChatInputBar(onSendMessage = onSendMessage)
+        // Barre de saisie inférieure avec insets dynamiques
+        ChatInputBar(
+            onSendMessage = onSendMessage,
+            onSendImage = onSendImage,
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+        )
+    }
+
+    // Dialogue d'aperçu d'image en plein écran
+    if (selectedImageUrl != null) {
+        Dialog(
+            onDismissRequest = { selectedImageUrl = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            ) {
+                AsyncImage(
+                    model = selectedImageUrl,
+                    contentDescription = "Plein écran",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+                IconButton(
+                    onClick = { selectedImageUrl = null },
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(16.dp)
+                        .align(Alignment.TopEnd)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Fermer",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
     }
 }

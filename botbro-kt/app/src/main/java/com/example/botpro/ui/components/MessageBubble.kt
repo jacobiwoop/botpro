@@ -1,6 +1,7 @@
 package com.example.botpro.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,8 +38,33 @@ import com.example.botpro.theme.TelegramColors
 @Composable
 fun MessageBubble(
     message: Message,
+    onImageClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    if (message.type == MessageType.DATE_SEPARATOR) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0x73111921))
+                    .padding(horizontal = 14.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    text = message.dateText ?: message.text ?: "",
+                    color = Color(0xFFD6E2EE),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        return
+    }
+
     val isOutgoing = message.isOutgoing
     val bubbleColor = if (isOutgoing) TelegramColors.BubbleOut else TelegramColors.BubbleIn
     val bubbleShape = if (isOutgoing) {
@@ -53,7 +79,88 @@ fun MessageBubble(
             .padding(horizontal = 8.dp, vertical = 3.dp),
         horizontalArrangement = if (isOutgoing) Arrangement.End else Arrangement.Start
     ) {
-        if (message.type == MessageType.FILE && message.file != null) {
+        if (message.type == MessageType.IMAGE && !message.imageUrl.isNullOrEmpty()) {
+            Column(
+                modifier = Modifier
+                    .width(260.dp)
+                    .clip(bubbleShape)
+                    .background(bubbleColor)
+                    .clickable { onImageClick(message.imageUrl) }
+            ) {
+                Box {
+                    AsyncImage(
+                        model = message.imageUrl,
+                        contentDescription = "Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    )
+                    if (message.text.isNullOrEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(6.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x99000000))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = message.time,
+                                    color = Color.White,
+                                    fontSize = 11.sp
+                                )
+                                if (isOutgoing) {
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Icon(
+                                        imageVector = if (message.isDoubleCheck) Icons.Default.DoneAll else Icons.Default.Done,
+                                        contentDescription = "Statut",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!message.text.isNullOrEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Text(
+                            text = message.text,
+                            color = Color.White,
+                            fontSize = 14.5.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = message.time,
+                                color = if (isOutgoing) TelegramColors.CheckBubble else Color(0xFF8FA8C6),
+                                fontSize = 11.sp
+                            )
+                            if (isOutgoing) {
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Icon(
+                                    imageVector = if (message.isDoubleCheck) Icons.Default.DoneAll else Icons.Default.Done,
+                                    contentDescription = "Statut",
+                                    tint = TelegramColors.CheckBubble,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (message.type == MessageType.FILE && message.file != null) {
             // Carte fichier / photo
             Row(
                 modifier = Modifier

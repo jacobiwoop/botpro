@@ -107,12 +107,25 @@ object MockData {
 
     val conversationMessages = listOf(
         Message(
+            id = "d1",
+            type = MessageType.DATE_SEPARATOR,
+            dateText = "Aujourd'hui"
+        ),
+        Message(
             id = "m1",
             type = MessageType.TEXT,
             isOutgoing = true,
             text = "Japan looks amazing!",
             time = "10:10",
             isDoubleCheck = true
+        ),
+        Message(
+            id = "m_img1",
+            type = MessageType.IMAGE,
+            isOutgoing = false,
+            imageUrl = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800",
+            text = "Kyoto temples in the morning ⛩️",
+            time = "10:12"
         ),
         Message(
             id = "m2",
