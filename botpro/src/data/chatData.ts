@@ -2,7 +2,7 @@ import { ChatItem } from '@/types/chat';
 
 export const CHAT_LIST_DATA: ChatItem[] = [
   {
-    id: '1',
+    id: 'demo_1',
     name: 'Telegram',
     avatarType: 'telegram',
     lastMessage: 'Kode masuk Anda: 54776 Ja...',
@@ -11,7 +11,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isVerified: true,
   },
   {
-    id: '2',
+    id: 'demo_2',
     name: 'Dapin',
     avatarType: 'image',
     avatarUri:
@@ -22,7 +22,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '3',
+    id: 'demo_3',
     name: 'Princes Cha',
     avatarType: 'initials',
     initials: 'PC',
@@ -32,7 +32,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '4',
+    id: 'demo_4',
     name: 'GetPaybot',
     avatarType: 'getpay',
     avatarBg: '#0095d9',
@@ -42,7 +42,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '5',
+    id: 'demo_5',
     name: 'Yg',
     avatarType: 'image',
     avatarUri:
@@ -52,7 +52,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '6',
+    id: 'demo_6',
     name: 'Dhini Anggraini',
     avatarType: 'image',
     avatarUri:
@@ -62,7 +62,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '7',
+    id: 'demo_7',
     name: '.',
     avatarType: 'dot',
     avatarBg: '#4e97cf',
@@ -72,7 +72,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '8',
+    id: 'demo_8',
     name: 'Silvi🤤',
     avatarType: 'image',
     avatarUri:
@@ -82,7 +82,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isMuted: true,
   },
   {
-    id: '9',
+    id: 'demo_9',
     name: 'Bby •†µkêñ†µ',
     avatarType: 'image',
     avatarUri:
@@ -93,7 +93,7 @@ export const CHAT_LIST_DATA: ChatItem[] = [
     isRead: true,
   },
   {
-    id: '10',
+    id: 'demo_10',
     name: 'Saved Messages',
     avatarType: 'saved',
     avatarBg: '#4ea4e6',

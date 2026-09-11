@@ -13,6 +13,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import {
   Feather,
   Ionicons,
@@ -27,6 +28,7 @@ interface DrawerMenuProps {
 }
 
 export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
+  const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   // Couvre de gauche à presque la fin (85% de l'écran, laissant une tranche à droite comme sur Telegram)
   const drawerWidth = Math.round(screenWidth * 0.85);
@@ -180,6 +182,21 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 
               {/* Liste des éléments du menu */}
               <View style={styles.menuSection}>
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    onClose();
+                    router.push('/botfather');
+                  }}
+                >
+                  <MaterialCommunityIcons name="robot" size={22} color="#52a6e6" style={styles.menuIcon} />
+                  <Text style={[styles.menuItemText, { color: '#52a6e6', fontWeight: '600' }]}>BotFather</Text>
+                  <View style={styles.botFatherBadge}>
+                    <Text style={styles.botFatherBadgeText}>NEW</Text>
+                  </View>
+                </TouchableOpacity>
+
                 <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
                   <Ionicons name="people-outline" size={22} color="#8596a7" style={styles.menuIcon} />
                   <Text style={styles.menuItemText}>Contacts</Text>
@@ -381,6 +398,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#52a6e6',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  botFatherBadge: {
+    backgroundColor: '#52a6e6',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  botFatherBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   nightModeRow: {
     flexDirection: 'row',

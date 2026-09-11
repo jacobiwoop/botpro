@@ -46,6 +46,13 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: '#0e1621' },
             }}
           />
+          <Stack.Screen
+            name="botfather"
+            options={{
+              animation: 'ios_from_right',
+              contentStyle: { backgroundColor: '#17212b' },
+            }}
+          />
         </Stack>
       </ThemeProvider>
     </SafeAreaProvider>

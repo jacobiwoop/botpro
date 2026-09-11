@@ -43,6 +43,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.botpro.data.mock.MockData
+import com.example.botpro.data.model.FileAttachment
 import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
 import com.example.botpro.theme.TelegramColors
@@ -102,8 +103,11 @@ fun ConversationScreen(
                 id = "msg_${System.currentTimeMillis()}",
                 type = MessageType.FILE,
                 isOutgoing = true,
-                fileName = "Document_Partagé.pdf",
-                fileSize = "2.4 MB",
+                file = FileAttachment(
+                    name = "Document_Partagé.pdf",
+                    size = "2.4 MB",
+                    thumbnailUri = ""
+                ),
                 time = currentTime,
                 isDoubleCheck = false
             )
@@ -246,8 +250,11 @@ fun ConversationScreen(
                             id = "msg_${System.currentTimeMillis()}",
                             type = MessageType.FILE,
                             isOutgoing = true,
-                            fileName = "Audio_001.mp3",
-                            fileSize = "3.2 MB",
+                            file = FileAttachment(
+                                name = "Audio_001.mp3",
+                                size = "3.2 MB",
+                                thumbnailUri = ""
+                            ),
                             time = currentTime,
                             isDoubleCheck = false
                         )
