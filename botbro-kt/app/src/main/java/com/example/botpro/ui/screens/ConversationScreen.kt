@@ -91,7 +91,7 @@ fun ConversationScreen(
             )
             messages = messages + newMessage
             scope.launch {
-                listState.animateScrollToItem(messages.size - 1)
+                listState.animateScrollToItem(0)
             }
         }
     }
@@ -115,7 +115,7 @@ fun ConversationScreen(
             )
             messages = messages + newMessage
             scope.launch {
-                listState.animateScrollToItem(messages.size - 1)
+                listState.animateScrollToItem(0)
             }
         }
     }
@@ -132,14 +132,14 @@ fun ConversationScreen(
         )
         messages = messages + newMessage
         scope.launch {
-            listState.animateScrollToItem(messages.size - 1)
+            listState.animateScrollToItem(0)
         }
     }
 
     // Défilement initial vers le bas lors de l'ouverture
     LaunchedEffect(Unit) {
         if (messages.isNotEmpty()) {
-            listState.scrollToItem(messages.size - 1)
+            listState.scrollToItem(0)
         }
     }
 
@@ -147,7 +147,7 @@ fun ConversationScreen(
     val isImeVisible = WindowInsets.isImeVisible
     LaunchedEffect(isImeVisible) {
         if (isImeVisible && messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.size - 1)
+            listState.animateScrollToItem(0)
         }
     }
 
@@ -171,16 +171,17 @@ fun ConversationScreen(
             )
         }
 
-        // Fil des messages
+        // Fil des messages inversé (ancré par le bas comme WhatsApp/Telegram)
         LazyColumn(
             state = listState,
+            reverseLayout = true,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             items(
-                items = messages,
+                items = messages.asReversed(),
                 key = { it.id }
             ) { message ->
                 MessageBubble(
@@ -236,7 +237,7 @@ fun ConversationScreen(
                         )
                         messages = messages + newMessage
                         scope.launch {
-                            listState.animateScrollToItem(messages.size - 1)
+                            listState.animateScrollToItem(0)
                         }
                     }
                     AttachmentType.LOCATION -> {
@@ -251,7 +252,7 @@ fun ConversationScreen(
                         )
                         messages = messages + newMessage
                         scope.launch {
-                            listState.animateScrollToItem(messages.size - 1)
+                            listState.animateScrollToItem(0)
                         }
                     }
                     AttachmentType.AUDIO -> {
@@ -270,7 +271,7 @@ fun ConversationScreen(
                         )
                         messages = messages + newMessage
                         scope.launch {
-                            listState.animateScrollToItem(messages.size - 1)
+                            listState.animateScrollToItem(0)
                         }
                     }
                     AttachmentType.POLL -> {
@@ -285,7 +286,7 @@ fun ConversationScreen(
                         )
                         messages = messages + newMessage
                         scope.launch {
-                            listState.animateScrollToItem(messages.size - 1)
+                            listState.animateScrollToItem(0)
                         }
                     }
                 }
