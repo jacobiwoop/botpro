@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Call
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalDrawerSheet
@@ -50,15 +52,25 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.botpro.data.api.ApiClient
 import com.example.botpro.theme.TelegramColors
 
 @Composable
 fun DrawerContent(
     onClose: () -> Unit,
+    onOpenBotFather: () -> Unit = {},
+    onOpenAuth: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showAccounts by remember { mutableStateOf(true) }
     var isNightMode by remember { mutableStateOf(true) }
+
+    val currentUser = ApiClient.currentUser
+    val displayName = currentUser?.let { "${it.firstName} ${it.lastName ?: ""}".trim() } ?: "darren lee"
+    val initials = if (displayName.isNotBlank()) {
+        displayName.split(" ").mapNotNull { it.firstOrNull()?.toString() }.take(2).joinToString("").uppercase()
+    } else "DL"
+    val displaySubtitle = currentUser?.username?.let { "@$it" } ?: currentUser?.email ?: "+44 7354 224381"
 
     ModalDrawerSheet(
         modifier = modifier
@@ -88,7 +100,7 @@ fun DrawerContent(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "DL",
+                        text = initials,
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold
@@ -106,14 +118,14 @@ fun DrawerContent(
                 ) {
                     Column {
                         Text(
-                            text = "darren lee",
+                            text = displayName,
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "+44 7354 224381",
+                            text = displaySubtitle,
                             color = TelegramColors.TextMuted,
                             fontSize = 13.sp
                         )
@@ -150,7 +162,7 @@ fun DrawerContent(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = "DL",
+                                text = initials,
                                 color = Color.White,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -158,7 +170,7 @@ fun DrawerContent(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "darren lee",
+                            text = displayName,
                             color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Medium,
@@ -175,7 +187,10 @@ fun DrawerContent(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { }
+                            .clickable {
+                                onClose()
+                                onOpenAuth()
+                            }
                             .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -188,14 +203,14 @@ fun DrawerContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
-                                contentDescription = "Ajouter",
+                                contentDescription = "Changer de compte",
                                 tint = Color(0xFF8596A7),
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Text(
-                            text = "Add Account",
+                            text = "Switch Account",
                             color = Color(0xFF8596A7),
                             fontSize = 15.sp
                         )
@@ -207,6 +222,46 @@ fun DrawerContent(
 
             // Rubriques menu
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                // Entrée BotFather (NEW)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onClose()
+                            onOpenBotFather()
+                        }
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SmartToy,
+                        contentDescription = "BotFather",
+                        tint = Color(0xFF52A6E6),
+                        modifier = Modifier.size(23.dp)
+                    )
+                    Spacer(modifier = Modifier.width(20.dp))
+                    Text(
+                        text = "BotFather",
+                        color = Color(0xFF52A6E6),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFF52A6E6))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "NEW",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
                 DrawerMenuItem(
                     icon = Icons.Default.Person,
                     title = "Contacts",
@@ -274,6 +329,34 @@ fun DrawerContent(
                         uncheckedThumbColor = Color(0xFFF4F3F4),
                         uncheckedTrackColor = Color(0xFF3A4B5D)
                     )
+                )
+            }
+
+            HorizontalDivider(color = Color(0x33101921), thickness = 1.dp)
+
+            // Bouton Déconnexion (Log Out)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onClose()
+                        onOpenAuth()
+                    }
+                    .padding(horizontal = 18.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Log Out",
+                    tint = Color(0xFFE17076),
+                    modifier = Modifier.size(23.dp)
+                )
+                Spacer(modifier = Modifier.width(20.dp))
+                Text(
+                    text = "Log Out",
+                    color = Color(0xFFE17076),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

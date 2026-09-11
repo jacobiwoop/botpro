@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.example.botpro.theme.TelegramColors
+import com.example.botpro.ui.screens.AuthScreen
+import com.example.botpro.ui.screens.BotFatherScreen
 import com.example.botpro.ui.screens.ChatListScreen
 import com.example.botpro.ui.screens.ConversationScreen
 
@@ -29,7 +31,7 @@ fun MainNavigation() {
     AnimatedContent(
         targetState = current,
         transitionSpec = {
-            if (targetState is ConversationNavKey) {
+            if (targetState is ConversationNavKey || targetState is BotFatherNavKey || targetState is AuthNavKey) {
                 (slideInHorizontally { width -> width } + fadeIn()).togetherWith(
                     slideOutHorizontally { width -> -width / 4 } + fadeOut()
                 )
@@ -56,10 +58,41 @@ fun MainNavigation() {
                     }
                 )
             }
+            is BotFatherNavKey -> {
+                BotFatherScreen(
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeLastOrNull()
+                        }
+                    },
+                    onOpenChatWithBot = { botName, botInitials ->
+                        backStack.add(ConversationNavKey(name = botName, initials = botInitials))
+                    }
+                )
+            }
+            is AuthNavKey -> {
+                AuthScreen(
+                    onAuthSuccess = {
+                        backStack.clear()
+                        backStack.add(ChatListNavKey)
+                    },
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeLastOrNull()
+                        }
+                    }
+                )
+            }
             else -> {
                 ChatListScreen(
                     onOpenChat = { name, initials ->
                         backStack.add(ConversationNavKey(name = name, initials = initials))
+                    },
+                    onOpenBotFather = {
+                        backStack.add(BotFatherNavKey())
+                    },
+                    onOpenAuth = {
+                        backStack.add(AuthNavKey)
                     }
                 )
             }

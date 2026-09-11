@@ -11,3 +11,11 @@ data class ConversationNavKey(
     val name: String,
     val initials: String
 ) : NavKey
+
+@Serializable
+data object AuthNavKey : NavKey
+
+@Serializable
+data class BotFatherNavKey(
+    val initialBotId: Long? = null
+) : NavKey

@@ -29,6 +29,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChatListScreen(
     onOpenChat: (name: String, initials: String) -> Unit,
+    onOpenBotFather: () -> Unit = {},
+    onOpenAuth: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -41,7 +43,9 @@ fun ChatListScreen(
             DrawerContent(
                 onClose = {
                     scope.launch { drawerState.close() }
-                }
+                },
+                onOpenBotFather = onOpenBotFather,
+                onOpenAuth = onOpenAuth
             )
         }
     ) {
