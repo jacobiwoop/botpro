@@ -74,6 +74,7 @@ fun ConversationScreen(
         // En-tête avec couleur dédiée sous la barre d'état
         Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .background(TelegramColors.Header)
                 .statusBarsPadding()
         ) {
