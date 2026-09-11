@@ -26,12 +26,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.TagFaces
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,11 +52,10 @@ private val sampleEmojis = listOf("😀", "😂", "🔥", "❤️", "👍", "�
 @Composable
 fun ChatInputBar(
     onSendMessage: (String) -> Unit,
-    onSendImage: (String) -> Unit = {},
+    onAttachmentClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var text by remember { mutableStateOf("") }
-    var showAttachmentMenu by remember { mutableStateOf(false) }
     var showEmojiPicker by remember { mutableStateOf(false) }
 
     Column(
@@ -69,55 +63,6 @@ fun ChatInputBar(
             .fillMaxWidth()
             .background(TelegramColors.Base)
     ) {
-        // Panneau des pièces jointes déroulant
-        AnimatedVisibility(
-            visible = showAttachmentMenu,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(TelegramColors.DrawerBg)
-                    .padding(vertical = 12.dp, horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                AttachmentOption(
-                    icon = Icons.Default.Image,
-                    label = "Galerie",
-                    bgColor = Color(0xFF9C27B0),
-                    onClick = {
-                        showAttachmentMenu = false
-                        onSendImage("https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800")
-                    }
-                )
-                AttachmentOption(
-                    icon = Icons.Default.Description,
-                    label = "Fichier",
-                    bgColor = Color(0xFF2196F3),
-                    onClick = { showAttachmentMenu = false }
-                )
-                AttachmentOption(
-                    icon = Icons.Default.CameraAlt,
-                    label = "Caméra",
-                    bgColor = Color(0xFFE91E63),
-                    onClick = { showAttachmentMenu = false }
-                )
-                AttachmentOption(
-                    icon = Icons.Default.LocationOn,
-                    label = "Lieu",
-                    bgColor = Color(0xFF4CAF50),
-                    onClick = { showAttachmentMenu = false }
-                )
-                AttachmentOption(
-                    icon = Icons.Default.Person,
-                    label = "Contact",
-                    bgColor = Color(0xFF00BCD4),
-                    onClick = { showAttachmentMenu = false }
-                )
-            }
-        }
-
         // Bandeau de sélection rapide d'Emojis
         AnimatedVisibility(
             visible = showEmojiPicker,
@@ -155,16 +100,13 @@ fun ChatInputBar(
         ) {
             // Bouton Pièce jointe / Trombone
             IconButton(
-                onClick = {
-                    showAttachmentMenu = !showAttachmentMenu
-                    if (showAttachmentMenu) showEmojiPicker = false
-                },
+                onClick = onAttachmentClick,
                 modifier = Modifier.size(40.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.AttachFile,
                     contentDescription = "Pièce jointe",
-                    tint = if (showAttachmentMenu) TelegramColors.Accent else Color(0xFF6F8295),
+                    tint = Color(0xFF6F8295),
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -210,7 +152,6 @@ fun ChatInputBar(
                     IconButton(
                         onClick = {
                             showEmojiPicker = !showEmojiPicker
-                            if (showEmojiPicker) showAttachmentMenu = false
                         },
                         modifier = Modifier.size(28.dp)
                     ) {
@@ -259,41 +200,5 @@ fun ChatInputBar(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun AttachmentOption(
-    icon: ImageVector,
-    label: String,
-    bgColor: Color,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(4.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(bgColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = label,
-            color = Color(0xFFD6E2EE),
-            fontSize = 12.sp
-        )
     }
 }

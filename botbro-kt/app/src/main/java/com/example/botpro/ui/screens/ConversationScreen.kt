@@ -1,5 +1,9 @@
 package com.example.botpro.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +22,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -39,6 +46,8 @@ import com.example.botpro.data.mock.MockData
 import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
 import com.example.botpro.theme.TelegramColors
+import com.example.botpro.ui.components.AttachmentBottomSheet
+import com.example.botpro.ui.components.AttachmentType
 import com.example.botpro.ui.components.ChatInputBar
 import com.example.botpro.ui.components.ConversationHeader
 import com.example.botpro.ui.components.MessageBubble
@@ -47,6 +56,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConversationScreen(
     contactName: String = "Hernes Dav",
@@ -56,8 +66,53 @@ fun ConversationScreen(
 ) {
     var messages by remember { mutableStateOf(MockData.conversationMessages) }
     var selectedImageUrl by remember { mutableStateOf<String?>(null) }
+    var showAttachmentSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val keyboardController = LocalSoftwareKeyboardController.current
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            val newMessage = Message(
+                id = "msg_${System.currentTimeMillis()}",
+                type = MessageType.IMAGE,
+                isOutgoing = true,
+                imageUrl = it.toString(),
+                text = "Photo partagée 📸",
+                time = currentTime,
+                isDoubleCheck = false
+            )
+            messages = messages + newMessage
+            scope.launch {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+    }
+
+    val docPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            val newMessage = Message(
+                id = "msg_${System.currentTimeMillis()}",
+                type = MessageType.FILE,
+                isOutgoing = true,
+                fileName = "Document_Partagé.pdf",
+                fileSize = "2.4 MB",
+                time = currentTime,
+                isDoubleCheck = false
+            )
+            messages = messages + newMessage
+            scope.launch {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+    }
 
     val onSendMessage: (String) -> Unit = { text ->
         val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
@@ -66,23 +121,6 @@ fun ConversationScreen(
             type = MessageType.TEXT,
             isOutgoing = true,
             text = text,
-            time = currentTime,
-            isDoubleCheck = false
-        )
-        messages = messages + newMessage
-        scope.launch {
-            listState.animateScrollToItem(messages.size - 1)
-        }
-    }
-
-    val onSendImage: (String) -> Unit = { url ->
-        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-        val newMessage = Message(
-            id = "msg_${System.currentTimeMillis()}",
-            type = MessageType.IMAGE,
-            isOutgoing = true,
-            imageUrl = url,
-            text = "Tokyo Tower 🗼",
             time = currentTime,
             isDoubleCheck = false
         )
@@ -141,10 +179,100 @@ fun ConversationScreen(
         // Barre de saisie inférieure avec insets dynamiques
         ChatInputBar(
             onSendMessage = onSendMessage,
-            onSendImage = onSendImage,
+            onAttachmentClick = {
+                keyboardController?.hide()
+                showAttachmentSheet = true
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+        )
+    }
+
+    // Modal Bottom Sheet pour les pièces jointes
+    if (showAttachmentSheet) {
+        AttachmentBottomSheet(
+            sheetState = sheetState,
+            onDismiss = { showAttachmentSheet = false },
+            onSelectAttachment = { type ->
+                showAttachmentSheet = false
+                when (type) {
+                    AttachmentType.GALLERY -> {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                    AttachmentType.CAMERA -> {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                    AttachmentType.DOCUMENT -> {
+                        docPickerLauncher.launch("*/*")
+                    }
+                    AttachmentType.CONTACT -> {
+                        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                        val newMessage = Message(
+                            id = "msg_${System.currentTimeMillis()}",
+                            type = MessageType.TEXT,
+                            isOutgoing = true,
+                            text = "👤 Contact partagé :\nMartha Craig\n📱 +81 3-1234-5678",
+                            time = currentTime,
+                            isDoubleCheck = false
+                        )
+                        messages = messages + newMessage
+                        scope.launch {
+                            listState.animateScrollToItem(messages.size - 1)
+                        }
+                    }
+                    AttachmentType.LOCATION -> {
+                        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                        val newMessage = Message(
+                            id = "msg_${System.currentTimeMillis()}",
+                            type = MessageType.TEXT,
+                            isOutgoing = true,
+                            text = "📍 Position partagée :\nTour de Tokyo, Minato City, Tokyo 105-0011",
+                            time = currentTime,
+                            isDoubleCheck = false
+                        )
+                        messages = messages + newMessage
+                        scope.launch {
+                            listState.animateScrollToItem(messages.size - 1)
+                        }
+                    }
+                    AttachmentType.AUDIO -> {
+                        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                        val newMessage = Message(
+                            id = "msg_${System.currentTimeMillis()}",
+                            type = MessageType.FILE,
+                            isOutgoing = true,
+                            fileName = "Audio_001.mp3",
+                            fileSize = "3.2 MB",
+                            time = currentTime,
+                            isDoubleCheck = false
+                        )
+                        messages = messages + newMessage
+                        scope.launch {
+                            listState.animateScrollToItem(messages.size - 1)
+                        }
+                    }
+                    AttachmentType.POLL -> {
+                        val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+                        val newMessage = Message(
+                            id = "msg_${System.currentTimeMillis()}",
+                            type = MessageType.TEXT,
+                            isOutgoing = true,
+                            text = "📊 Sondage :\nQuand se retrouve-t-on pour dîner ?\n▫️ Ce soir à 20h\n▫️ Demain midi\n▫️ Ce week-end",
+                            time = currentTime,
+                            isDoubleCheck = false
+                        )
+                        messages = messages + newMessage
+                        scope.launch {
+                            listState.animateScrollToItem(messages.size - 1)
+                        }
+                    }
+                }
+            }
         )
     }
 
