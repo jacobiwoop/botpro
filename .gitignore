@@ -19,5 +19,6 @@ captures/
 # Reference & private captures
 reference/
 *.png
+!botbro-kt/**/*.png
 apk_botpro/
 

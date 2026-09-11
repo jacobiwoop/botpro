@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Telegram Chat List</title>
+<!-- Tailwind CSS v3 CDN with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration for Telegram Dark Theme Palette -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            tg: {
+              base: '#17212b',       // Main chat list background
+              header: '#242f3d',     // Top app bar / header background
+              surface: '#242f3d',    // Active / surface color
+              border: '#101921',     // Divider lines
+              accent: '#5288c1',     // Default Telegram blue button/icons
+              fab: '#54a9eb',        // Floating action button light blue
+              textPrimary: '#ffffff',// Main title / contact names
+              textMuted: '#7e8c9b',  // Previews, timestamps, muted icons
+              badge: '#2f3f50',      // Muted unread badge background
+              verified: '#5288c1'    // Verified checkmark background
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"Roboto"', '"Segoe UI"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+<!-- Font Awesome Icons for accurate Telegram UI symbols -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<!-- Custom Styles for Precise Telegram UI Details -->
+<style data-purpose="custom-overrides">
+    /* Remove tap highlight on mobile */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 0px;
+    }
+    
+    /* Smooth text rendering */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  </style>
+</head>
+<body class="bg-black text-white font-sans flex justify-center min-h-screen">
+<!-- BEGIN: MobileDeviceFrame -->
+<div class="w-full max-w-[440px] bg-tg-base min-h-screen flex flex-col relative overflow-x-hidden select-none border-x border-[#0e1621]/40 shadow-2xl">
+<!-- BEGIN: TopStatusBar (Simulated Android/iOS Bar) -->
+<header class="bg-tg-header text-gray-300 text-xs px-4 pt-1.5 pb-1 flex items-center justify-between tracking-wide select-none">
+<!-- Network / Clock -->
+<div class="flex items-center space-x-1.5 font-medium text-[12px]">
+<span class="text-[10px] font-bold tracking-tighter">4G</span>
+<i class="fa-solid fa-signal text-[9px]"></i>
+<span class="ml-1 font-semibold">13.39</span>
+<i class="fa-solid fa-camera text-[10px] ml-1 opacity-70"></i>
+</div>
+<!-- Right Status Indicators -->
+<div class="flex items-center space-x-2 text-[11px]">
+<div class="text-[9px] leading-none text-right font-mono">
+<div>10,9</div>
+<div>KB/dtk</div>
+</div>
+<i class="fa-solid fa-wifi text-[11px]"></i>
+<div class="flex items-center space-x-0.5">
+<span class="text-[10px] font-semibold">63</span>
+<i class="fa-solid fa-battery-three-quarters text-[12px]"></i>
+</div>
+</div>
+</header>
+<!-- END: TopStatusBar -->
+<!-- BEGIN: MainAppBar -->
+<nav class="bg-tg-header h-[54px] px-4 flex items-center justify-between shadow-sm sticky top-0 z-30">
+<div class="flex items-center space-x-6">
+<!-- Hamburger Menu Button -->
+<button aria-label="Menu" class="text-[#8495a6] hover:text-white transition-colors active:scale-95">
+<i class="fa-solid fa-bars text-[19px]"></i>
+</button>
+<!-- App Title -->
+<h1 class="text-white text-[20px] font-semibold tracking-wide">Telegram</h1>
+</div>
+<!-- Search Icon Button -->
+<button aria-label="Search" class="text-[#8495a6] hover:text-white transition-colors active:scale-95 pr-1">
+<i class="fa-solid fa-magnifying-glass text-[19px]"></i>
+</button>
+</nav>
+<!-- END: MainAppBar -->
+<!-- BEGIN: ChatListContent -->
+<main class="flex-1 pb-20 overflow-y-auto" data-purpose="chat-feed">
+<!-- ITEM 1: Telegram Official -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors relative">
+<div class="relative w-13 h-13 flex-shrink-0 mr-3.5">
+<div class="w-[52px] h-[52px] rounded-full bg-gradient-to-b from-[#2a9be4] to-[#2084ca] flex items-center justify-center text-white shadow-sm">
+<i class="fa-solid fa-paper-plane text-2xl -ml-0.5 -mt-0.5 text-white"></i>
+</div>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Telegram</span>
+<!-- Verified Badge -->
+<span class="text-[#2b97e2] text-xs flex items-center justify-center">
+<i class="fa-solid fa-circle-check text-[14px]"></i>
+</span>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">13:33</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Kode masuk Anda: 54776 Ja...</p>
+<span class="bg-tg-badge text-gray-200 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center text-[11px]">3</span>
+</div>
+</div>
+</div>
+<!-- ITEM 2: Dapin -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 overflow-hidden bg-gray-700">
+<img alt="Dapin" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATSyouHe2driEpBHTNfH2ozwEViDrHlpsFgy_0ftb6tQ6__xRGpkxe5kQ7-5qq4Yp-bUFByuf_aHTvw_lNt4SiksXMaQK9URY6XQzeuUNdT8GHXFLom01keGIN-8rpl7TfOHF0DpKaoM3XnVEZVICq3uR7Dh04GZCzj6_rNbZU_S67CZJfKlCUye-iUrZpyT0_vacnIaorRCrIRlFAvwBrPwVX4htLK5fpxeukAB-y77CeiFlkXYkh"/>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Dapin</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Sun</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Pnct cokk</p>
+<span class="bg-tg-badge text-gray-200 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center text-[11px]">2</span>
+</div>
+</div>
+</div>
+<!-- ITEM 3: Princes Cha -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 bg-[#8261e6] flex items-center justify-center text-white font-semibold text-lg tracking-wider">
+          PC
+        </div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Princes Cha</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Sun</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Lagi gak bisa vc</p>
+</div>
+</div>
+</div>
+<!-- ITEM 4: GetPaybot -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 bg-[#0095d9] flex flex-col items-center justify-center text-white">
+<div class="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center font-bold text-xs">P</div>
+<span class="text-[8px] font-bold tracking-tight mt-0.5 uppercase">GetPay</span>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">GetPaybot</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Sat</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Aku baru saja menemukan ap...</p>
+<span class="bg-tg-badge text-gray-200 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center text-[11px]">1</span>
+</div>
+</div>
+</div>
+<!-- ITEM 5: Yg -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 overflow-hidden bg-gray-800">
+<img alt="Yg" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcq01cBpBo1ryvGQ_Ii7OxB31pOicJDhFxaOAfgBZQY-4F_XxdDKCIVIOOe4gUZDFSmQ-zKh-BkY6KDXOqeIupZt9RzrMariNxXX7_2Of3N1hJoQsD29iuiQ0w2D8lB-HTDUXcsuvZmT3F4MwLRTVKBLLTMQJ6rMiuTppXhhKOVV9QT7plPYf2vM9rPQLxsOS7d9E6Vjon0MycNt8WcDViG3H-8jR639ggIeyteggNXsa9DksnAU6y"/>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Yg</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Fri</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Hi</p>
+</div>
+</div>
+</div>
+<!-- ITEM 6: Dhini Anggraini -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 overflow-hidden bg-gray-800">
+<img alt="Dhini Anggraini" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHfGjUwpfD67Z8ZKx-psdSsqggPpeNdQ_4PNwKD4ADckSoYTwIblWmVuriWLQ1i8CumDdB7ctuc7ULsJiQ2zeco0uFugNcO4cTNw9hrXfFed_M9Z9T4Sz6twVGOUONuvu8NxR-gqy9rmN_QiBZotZUDUq65QHOtOmaU4h5sk9YGd8pSOPdA63kjDFvnya3fvGx57uNwE2fu8JLbz24N0HMpXURgEDMxDrA81V_iMVpXKTsPFrGur2u"/>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Dhini Anggraini</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Fri</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">Iyh</p>
+</div>
+</div>
+</div>
+<!-- ITEM 7: . -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 bg-[#4e97cf] flex items-center justify-center">
+<span class="w-1.5 h-1.5 bg-white rounded-full"></span>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">.</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Fri</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">G</p>
+<span class="bg-tg-badge text-gray-200 text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center text-[11px]">1</span>
+</div>
+</div>
+</div>
+<!-- ITEM 8: Silvi -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 overflow-hidden bg-gray-800">
+<img alt="Silvi" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDulHXxD36Sw4Y8O3Qtlt7SYQ3V-K7HIEnY2f1i4B-Uv3FfmZL5RyjQSiB88aSCMhXPjgHONT9ENOrby3qcvDBWDWO4b8b0rvqWNLcovS31rYjb2zwbPL2kOuMNHbHiAKC0irOluldVYSSTwqJphh3h0tTVo6MjkBzdIPqrOk_6MjPkfp9p3heG5Ix0Jvw0TvhlSWQFVt4-90o5HU2ax-NpMGVzHZH1IkZ9mN_hnLq7Cv_JUkGwOumZ"/>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Silvi🤤</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<span class="text-xs text-tg-textMuted font-normal">Fri</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">G</p>
+</div>
+</div>
+</div>
+<!-- ITEM 9: Bby -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 overflow-hidden bg-gray-800">
+<img alt="Bby" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZjWPOdFoR4aC2QxZE80Yf1UFXm3clslK03vZm5R-k34fTDPhGhgdeAW8E3nmnwpyBEpN_xrpJCRf4cNx1L5z1qvroDZIjdKPQTNS-GcI9vYkUlhjb8gw3AMpoJI3fq6sXpdUnYxOrrXRFVpsU3LtnZPSGOKGk7I5aR7u4EBQeq4zxfhTH-lP7QG2M-JvFF6ye4byg-W48vS1-Vyi0cScPDYp7Gh4yMa_xlM_ix3L2YqQm74RDflNc"/>
+</div>
+<div class="flex-1 min-w-0 border-b border-tg-border/70 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<div class="flex items-center space-x-1.5">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Bby •†µkêñ†µ</span>
+<i class="fa-solid fa-volume-xmark text-tg-textMuted/60 text-[11px]"></i>
+</div>
+<div class="flex items-center space-x-1 text-xs text-tg-textMuted font-normal">
+<i class="fa-solid fa-check-double text-[11px] text-[#55a5e3]"></i>
+<span>Fri</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal">hai</p>
+</div>
+</div>
+</div>
+<!-- ITEM 10: Saved Messages -->
+<div class="flex items-center px-3 py-2.5 hover:bg-[#202b36] active:bg-[#1c2630] cursor-pointer transition-colors">
+<div class="w-[52px] h-[52px] rounded-full flex-shrink-0 mr-3.5 bg-[#4ea4e6] flex items-center justify-center text-white shadow-sm">
+<i class="fa-regular fa-bookmark text-2xl text-white"></i>
+</div>
+<div class="flex-1 min-w-0 pb-2.5">
+<div class="flex items-center justify-between mb-1">
+<span class="font-semibold text-[15.5px] text-white tracking-wide">Saved Messages</span>
+<span class="text-xs text-tg-textMuted font-normal">Fri</span>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-[14px] text-tg-textMuted truncate pr-2 font-normal"> </p>
+</div>
+</div>
+</div>
+</main>
+<!-- END: ChatListContent -->
+<!-- BEGIN: FloatingActionButton -->
+<div class="fixed bottom-6 right-6 z-40 max-w-[440px]">
+<button aria-label="Compose new message" class="w-[58px] h-[58px] rounded-full bg-[#52a6e6] hover:bg-[#4698d8] active:scale-95 text-white flex items-center justify-center shadow-lg transition-transform duration-150">
+<i class="fa-solid fa-pen text-xl"></i>
+</button>
+</div>
+<!-- END: FloatingActionButton -->
+</div>
+<!-- END: MobileDeviceFrame -->
+</body></html>

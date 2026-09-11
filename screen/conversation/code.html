@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Telegram Chat - Martha Craig</title>
+<!-- Tailwind CSS v3 with forms and container plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- BEGIN: Custom Styling for Telegram Pattern & iOS specifics -->
+<style data-purpose="custom-background">
+    /* Subtle Telegram Doodle pattern recreation using SVG data URI */
+    .telegram-bg {
+      background-color: #0f161e;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 24px 24px;
+      position: relative;
+    }
+    
+    /* Decorative doodle vector overlay */
+    .doodle-overlay {
+      background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='0.7' stroke-opacity='0.08'%3E%3Cpath d='M20 20 l15 15 m0 -15 l-15 15'/%3E%3Ccircle cx='70' cy='30' r='10'/%3E%3Cpath d='M30 80 q10 -15 20 0 t20 0'/%3E%3Cpolygon points='95,75 105,95 85,95'/%3E%3Cpath d='M10 60 h15 v10 h-15 z'/%3E%3Cpath d='M75 105 a10,10 0 0,0 20,0'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /* Hide scrollbars for clean native app appearance */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+<style data-purpose="chat-bubbles">
+    /* Outgoing bubble Telegram dark theme: #2b5278 */
+    .bubble-out {
+      background-color: #2b5278;
+      border-radius: 18px 18px 4px 18px;
+    }
+    
+    /* Incoming bubble Telegram dark theme: #182533 */
+    .bubble-in {
+      background-color: #182533;
+      border-radius: 18px 18px 18px 4px;
+    }
+
+    /* Outgoing file attachments have slightly different layout */
+    .file-bubble-out {
+      background-color: #2b5278;
+      border-radius: 18px;
+    }
+  </style>
+<!-- END: Custom Styling -->
+</head>
+<body class="bg-black text-white flex justify-center items-center min-h-screen font-sans antialiased select-none">
+<!-- BEGIN: Mobile Device Frame Simulator -->
+<div class="w-full max-w-[420px] h-[100vh] max-h-[915px] bg-[#0e1621] flex flex-col justify-between overflow-hidden relative shadow-2xl" data-purpose="mobile-container">
+<!-- Pattern Background -->
+<div class="absolute inset-0 telegram-bg doodle-overlay pointer-events-none z-0"></div>
+<!-- Content Wrapper -->
+<div class="relative z-10 flex flex-col h-full w-full">
+<!-- BEGIN: iOS Status Bar -->
+<header class="w-full pt-3 px-7 pb-1 flex justify-between items-center text-white text-[15px] font-semibold tracking-tight shrink-0 bg-[#17212b]/80 backdrop-blur-md" data-purpose="ios-status-bar">
+<span>9:41</span>
+<div class="flex items-center space-x-1.5">
+<!-- Cellular signal -->
+<svg class="w-4 h-3 fill-current" viewbox="0 0 17 12">
+<rect height="4" rx="0.5" width="2.5" x="0" y="8"></rect>
+<rect height="6.5" rx="0.5" width="2.5" x="4" y="5.5"></rect>
+<rect height="9" rx="0.5" width="2.5" x="8" y="3"></rect>
+<rect height="11.5" rx="0.5" width="2.5" x="12" y="0.5"></rect>
+</svg>
+<!-- Wifi icon -->
+<svg class="w-4 h-3.5 fill-current" viewbox="0 0 16 12">
+<path d="M8 2.5a11.9 11.9 0 0 1 7.2 2.5.8.8 0 0 1-.1 1.2l-1.3 1.1a.7.7 0 0 1-.9-.1A8.2 8.2 0 0 0 8 5.4a8.2 8.2 0 0 0-4.9 1.8.7.7 0 0 1-.9.1L.9 6.2a.8.8 0 0 1-.1-1.2A11.9 11.9 0 0 1 8 2.5zm0 4.2a7.3 7.3 0 0 1 4.3 1.4.7.7 0 0 1 0 1l-1.3 1.2a.7.7 0 0 1-.9 0 3.7 3.7 0 0 0-4.2 0 .7.7 0 0 1-.9 0L3.7 9.1a.7.7 0 0 1 0-1 7.3 7.3 0 0 1 4.3-1.4zM8 10a1.2 1.2 0 1 1 0 2.4A1.2 1.2 0 0 1 8 10z"></path>
+</svg>
+<!-- Battery icon -->
+<div class="w-6 h-3 border border-white/80 rounded-[4px] p-0.5 flex items-center">
+<div class="bg-white h-full w-full rounded-[1.5px]"></div>
+</div>
+</div>
+</header>
+<!-- END: iOS Status Bar -->
+<!-- BEGIN: Chat Navigation Header -->
+<nav class="bg-[#17212b]/95 backdrop-blur-md px-3 py-2 border-b border-[#0f1621] flex items-center justify-between shrink-0 shadow-sm" data-purpose="chat-header">
+<!-- Back Button & Label -->
+<button class="flex items-center text-[#5288c1] hover:opacity-80 transition active:scale-95 space-x-0.5">
+<svg class="w-6 h-6 stroke-current fill-none" stroke-width="2.2" viewbox="0 0 24 24">
+<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+<span class="text-[17px] font-normal tracking-tight -ml-0.5">Chats</span>
+</button>
+<!-- Contact Info Center -->
+<div class="flex flex-col items-center cursor-pointer">
+<span class="font-medium text-[16px] leading-tight text-[#f5f5f5]">Martha Craig</span>
+<span class="text-[12px] text-[#708499] leading-tight">last seen just now</span>
+</div>
+<!-- Avatar Right -->
+<div class="relative cursor-pointer">
+<img alt="Martha Craig Avatar" class="w-9 h-9 rounded-full object-cover ring-1 ring-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9EQIHA3FJLVdMzXDYmqszmHtd220QrYM_c0R523ZjSSM5OZmhJON9XNKdHQ2pdGUsIBhpYlGMUVl60MgD99ImXvacxUd46BkjT0NgNwn6m9L_ZU7od5ftX-YsvetmsD1CX3xa6-8RtGDkrE-sYh38f4bGwonifh3bUUEjGu7pBzKtU5zWRu_bRW_bRh4Pq8x42v3vtWo4lwsqVfJXzNo21QMqVAPr7RDTuixEiXeoOeAXzzeiw5bg"/>
+</div>
+</nav>
+<!-- END: Chat Navigation Header -->
+<!-- BEGIN: Chat Message List -->
+<main class="flex-1 overflow-y-auto p-3 space-y-2.5 flex flex-col justify-end text-[14px]" data-purpose="message-thread">
+<!-- Outgoing Message: Japan looks amazing! -->
+<div class="flex justify-end">
+<div class="bubble-out px-3.5 py-1.5 max-w-[80%] flex items-end space-x-2 shadow-sm">
+<p class="text-white text-[15px] leading-snug">Japan looks amazing!</p>
+<div class="flex items-center space-x-0.5 text-[11px] text-[#7ea3cc] shrink-0 translate-y-0.5">
+<span>10:10</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7zm-3.5 0a.5.5 0 0 0-.708-.708L3 8.793l.646.647.708-.708 3.5-3.5 1-1z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Outgoing File Card 1: IMG_0475.PNG -->
+<div class="flex justify-end">
+<div class="file-bubble-out p-1.5 flex items-center space-x-3 w-[260px] shadow-sm">
+<img alt="IMG_0475 preview" class="w-16 h-16 rounded-xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzwCh09Ka0qhXuxq8GHSxOoogAAXnzOTb10eo3E_wn9M993zJFVNO7mPr_t7B41gzyltrf3q3WqpMCWHDpPb_HW8il00yDGhCT358JbvErBcIcSc8DJjnA5jDqGD3684lwDciUMCAwSjecJQGL5xIzgbE8_L40GcPBPULx-Q5b9OTENWC-sHMCVLSCoRROltFbp3OUH_2pFie7KaUsHk784dKYod1PgCHn3muFfKQgp3kx7dhZeOMK"/>
+<div class="flex flex-col justify-between flex-1 pr-1.5">
+<span class="font-medium text-[15px] text-white tracking-tight">IMG_0475.PNG</span>
+<span class="text-[12px] text-[#8fa8c6]">2.4 MB</span>
+<div class="flex items-center justify-end space-x-0.5 text-[11px] text-[#7ea3cc] -mt-1">
+<span>10:15</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Outgoing File Card 2: IMG_0481.PNG -->
+<div class="flex justify-end">
+<div class="file-bubble-out p-1.5 flex items-center space-x-3 w-[260px] shadow-sm">
+<img alt="IMG_0481 preview" class="w-16 h-16 rounded-xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALk4zwL3kgbLfqF0QdbodSUtFPsmx1rXr5MQm6qFPasfjDoKPIC58JA7uP03Vjg1b82fyfqwJ8CfdzHwu6XEV6ucQcSico-y1E4JQBByeinr7aO_Gf9XA-tNFAkzh3FXxDGTNXbsPbMdN1oSr8QdGeyV7h5aX3kg2oyZ40LdVLZIL3iU_BV7FPoz5nr_SU_d0jflUlrG3_R7GZhqJLak0rJMiyJ6ggEPt5H0MS9eam5nHuVxaYKrOC"/>
+<div class="flex flex-col justify-between flex-1 pr-1.5">
+<span class="font-medium text-[15px] text-white tracking-tight">IMG_0481.PNG</span>
+<span class="text-[12px] text-[#8fa8c6]">2.8 MB</span>
+<div class="flex items-center justify-end space-x-0.5 text-[11px] text-[#7ea3cc] -mt-1">
+<span>10:15</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Incoming Message with Reply Quotation -->
+<div class="flex justify-start">
+<div class="bubble-in px-3 py-2 max-w-[82%] text-white shadow-sm">
+<!-- Reply/Quote border -->
+<div class="border-l-2 border-[#549cda] pl-2 mb-1.5">
+<p class="text-[13px] font-semibold text-[#549cda]">Martha Craig</p>
+<p class="text-[13px] text-[#93a4b5]">Good morning!</p>
+</div>
+<div class="flex items-end justify-between space-x-2">
+<p class="text-[15px] leading-snug">Do you know what time is it?</p>
+<span class="text-[11px] text-[#6d7e8f] shrink-0 ml-2">11:40</span>
+</div>
+</div>
+</div>
+<!-- Outgoing Message: Tokyo time with emoji -->
+<div class="flex justify-end">
+<div class="bubble-out px-3.5 py-1.5 max-w-[80%] flex items-end space-x-2 shadow-sm">
+<p class="text-white text-[15px] leading-snug">It's morning in Tokyo 😎</p>
+<div class="flex items-center space-x-0.5 text-[11px] text-[#7ea3cc] shrink-0 translate-y-0.5">
+<span>11:43</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Incoming Message: What is the most popular meal? -->
+<div class="flex justify-start">
+<div class="bubble-in px-3.5 py-2 max-w-[80%] text-white flex items-end justify-between space-x-2 shadow-sm">
+<p class="text-[15px] leading-snug">What is the most popular meal in Japan?</p>
+<span class="text-[11px] text-[#6d7e8f] shrink-0 ml-1">11:45</span>
+</div>
+</div>
+<!-- Incoming Message: Do you like it? -->
+<div class="flex justify-start">
+<div class="bubble-in px-3.5 py-1.5 max-w-[80%] text-white flex items-end space-x-2 shadow-sm">
+<p class="text-[15px] leading-snug">Do you like it?</p>
+<span class="text-[11px] text-[#6d7e8f] shrink-0">11:45</span>
+</div>
+</div>
+<!-- Outgoing Message: I think top two are -->
+<div class="flex justify-end">
+<div class="bubble-out px-3.5 py-1.5 max-w-[80%] flex items-end space-x-2 shadow-sm">
+<p class="text-white text-[15px] leading-snug">I think top two are:</p>
+<div class="flex items-center space-x-0.5 text-[11px] text-[#7ea3cc] shrink-0 translate-y-0.5">
+<span>11:50</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7zm-3.5 0a.5.5 0 0 0-.708-.708L3 8.793l.646.647.708-.708 3.5-3.5 1-1z"></path>
+</svg>
+</div>
+</div>
+</div>
+<!-- Outgoing File Card 3: IMG_0483.PNG (Sushi/Tonkatsu) -->
+<div class="flex justify-end">
+<div class="file-bubble-out p-1.5 flex items-center space-x-3 w-[260px] shadow-sm">
+<img alt="IMG_0483 preview" class="w-16 h-16 rounded-xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5dVANzwykC8roVv31pyTzlm8Y4Vt7kU-i4-QDXuE3GGeVj4EX3SBkoXPjVyY96NqA-RK2zGYCJ8QA8X01IrB8ix2MkjLii4jpxJp0nixiCJq11pdVTm7BLnMfJQ1DVuDtlsIrDBitsg7KPNZgZH7dGIKTbkZORBVCBrpMxRiwKOW8HhgGkTDlGsqfMScPrNiiIpJF-5egMo0tOSYfPknaiZJEj9DHIgP5kDSYYjwmJ7ZNU9xOjhpQ"/>
+<div class="flex flex-col justify-between flex-1 pr-1.5">
+<span class="font-medium text-[15px] text-white tracking-tight">IMG_0483.PNG</span>
+<span class="text-[12px] text-[#8fa8c6]">2.8 MB</span>
+<div class="flex items-center justify-end space-x-0.5 text-[11px] text-[#7ea3cc] -mt-1">
+<span>11:51</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7zm-3.5 0a.5.5 0 0 0-.708-.708L3 8.793l.646.647.708-.708 3.5-3.5 1-1z"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+<!-- Outgoing File Card 4: IMG_0484.PNG (Ramen/Udon) -->
+<div class="flex justify-end">
+<div class="file-bubble-out p-1.5 flex items-center space-x-3 w-[260px] shadow-sm">
+<img alt="IMG_0484 preview" class="w-16 h-16 rounded-xl object-cover shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKkvYgT364cLwTiglubksfT0IN06SR4G2LQgjp-oVt2lHY34erkHujT3PRL6ZS6UTKW6LnjpgxEvFUUvZRfp2-o3DkysE5q4fvE1Km_5uO4UmdsHIMHPXZtTVV84EebqIjFNhBfCTpgapYBYvzbPG-qu9vxm2FVmflZxu86qWKF7j_meg78oHxCnacH8NTmco0No_YYNSRqatJDFZabCkSXgWqJmEz0qJufHteKuWXIdkziGp091-d"/>
+<div class="flex flex-col justify-between flex-1 pr-1.5">
+<span class="font-medium text-[15px] text-white tracking-tight">IMG_0484.PNG</span>
+<span class="text-[12px] text-[#8fa8c6]">2.6 MB</span>
+<div class="flex items-center justify-end space-x-0.5 text-[11px] text-[#7ea3cc] -mt-1">
+<span>11:51</span>
+<svg class="w-3.5 h-3.5 fill-current" viewbox="0 0 16 16">
+<path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 2.354 7.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7zm-3.5 0a.5.5 0 0 0-.708-.708L3 8.793l.646.647.708-.708 3.5-3.5 1-1z"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- END: Chat Message List -->
+<!-- BEGIN: Bottom Input Bar -->
+<footer class="bg-[#17212b] px-3 pt-2 pb-6 flex items-center space-x-2 border-t border-[#0f1621] shrink-0" data-purpose="chat-input-bar">
+<!-- Attachment Paperclip -->
+<button aria-label="Attach media" class="p-1 text-[#6f8295] hover:text-white transition" type="button">
+<svg class="w-6 h-6 stroke-current fill-none" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+<!-- Text Input Field Container -->
+<div class="flex-1 bg-[#0f1621] rounded-2xl flex items-center px-3.5 py-1.5 border border-transparent focus-within:border-[#5288c1]">
+<input class="bg-transparent border-0 focus:ring-0 p-0 text-[16px] text-white placeholder-[#687b8e] w-full" placeholder="Message" type="text"/>
+<!-- Sticker / Emoji icon inside input -->
+<button aria-label="Open stickers" class="text-[#6f8295] hover:text-white pl-1.5" type="button">
+<svg class="w-5 h-5 fill-none stroke-current" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+<!-- Voice Note Microphone -->
+<button aria-label="Record voice note" class="p-1 text-[#6f8295] hover:text-white transition" type="button">
+<svg class="w-6 h-6 fill-none stroke-current" stroke-width="1.8" viewbox="0 0 24 24">
+<path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</footer>
+<!-- END: Bottom Input Bar -->
+<!-- iOS Bottom Indicator Bar -->
+<div class="w-full bg-[#17212b] pb-2 flex justify-center shrink-0">
+<div class="w-32 h-1 bg-white/40 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- END: Mobile Device Frame Simulator -->
+</body></html>
