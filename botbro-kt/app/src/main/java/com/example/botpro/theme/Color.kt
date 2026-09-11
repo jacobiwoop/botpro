@@ -22,4 +22,5 @@ object TelegramColors {
     val BubbleOut = Color(0xFF2B5278)
     val BubbleIn = Color(0xFF182533)
     val QuoteBar = Color(0xFF64B5F6)
+    val DrawerBg = Color(0xFF17212B)
 }
