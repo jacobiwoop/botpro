@@ -52,14 +52,18 @@ jobs:
         run: |
           chmod +x botpro/android/gradlew
 
-      - name: Assemble Debug APK
+      - name: Ensure Release Signing Config
+        run: |
+          sed -i 's/signingConfig signingConfigs.release/signingConfig signingConfigs.debug/g' botpro/android/app/build.gradle || true
+
+      - name: Assemble Release APK
         run: |
           cd botpro/android
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Botpro-React-Native-APK
-          path: botpro/android/app/build/outputs/apk/debug/*.apk
+          name: Botpro-React-Native-Release-APK
+          path: botpro/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
