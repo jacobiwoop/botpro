@@ -20,6 +20,7 @@ captures/
 reference/
 *.png
 !botbro-kt/**/*.png
+!botpro/assets/**/*.png
 apk_botpro/
 .*_env
 *.env
