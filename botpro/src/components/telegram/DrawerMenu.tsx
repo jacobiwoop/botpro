@@ -93,15 +93,15 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 
   const initials = currentUser
     ? (currentUser.first_name[0] + (currentUser.last_name ? currentUser.last_name[0] : '')).toUpperCase()
-    : 'DL';
+    : 'U';
 
   const displayName = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name || ''}`.trim()
-    : 'darren lee';
+    : 'Mon Profil';
 
   const displaySubtitle = currentUser
     ? (currentUser.username ? `@${currentUser.username}` : currentUser.email)
-    : '+44 7354 224381';
+    : '';
 
   const handleLogout = async () => {
     await clearAuthSession();

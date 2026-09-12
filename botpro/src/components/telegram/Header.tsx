@@ -5,9 +5,10 @@ import { TelegramColors } from '@/constants/telegramTheme';
 
 interface HeaderProps {
   onMenuPress?: () => void;
+  onSearchPress?: () => void;
 }
 
-export function Header({ onMenuPress }: HeaderProps) {
+export function Header({ onMenuPress, onSearchPress }: HeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.leftSection}>
@@ -22,7 +23,13 @@ export function Header({ onMenuPress }: HeaderProps) {
         </TouchableOpacity>
         <Text style={styles.title}>Telegram</Text>
       </View>
-      <TouchableOpacity style={styles.iconButton} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+      <TouchableOpacity
+        style={styles.iconButton}
+        onPress={onSearchPress}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityRole="button"
+        accessibilityLabel="Recherche de bots et contacts"
+      >
         <Feather name="search" size={21} color="#8596a7" />
       </TouchableOpacity>
     </View>

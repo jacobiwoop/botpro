@@ -1,0 +1,8 @@
+{
+  "name": "aiko-ai-bot",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "deploy": "wrangler deploy"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "aiko-ai-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-09-01",
+  "account_id": "9c4e8c910e7ded1f322f3a01ad02b940"
+}

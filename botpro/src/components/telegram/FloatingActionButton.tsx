@@ -3,13 +3,18 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TelegramColors } from '@/constants/telegramTheme';
 
-export function FloatingActionButton() {
+interface FloatingActionButtonProps {
+  onPress?: () => void;
+}
+
+export function FloatingActionButton({ onPress }: FloatingActionButtonProps) {
   return (
     <TouchableOpacity
       style={styles.fab}
       activeOpacity={0.85}
+      onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Nouveau message"
+      accessibilityLabel="Nouveau message ou bot"
     >
       <MaterialCommunityIcons name="pencil" size={24} color="#ffffff" />
     </TouchableOpacity>

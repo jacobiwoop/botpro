@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
+  Text,
+  TouchableOpacity,
   FlatList,
   StyleSheet,
   KeyboardAvoidingView,
@@ -12,7 +14,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ConversationHeader } from '@/components/telegram/ConversationHeader';
 import { MessageBubble } from '@/components/telegram/MessageBubble';
 import { ChatInputBar } from '@/components/telegram/ChatInputBar';
-import { CONVERSATION_MESSAGES } from '@/data/conversationData';
+import { ConversationSkeleton } from '@/components/telegram/ConversationSkeleton';
 import { TelegramColors } from '@/constants/telegramTheme';
 import { Message } from '@/types/conversation';
 import {
@@ -21,6 +23,24 @@ import {
   subscribeToRealtimeMessages,
   ApiMessage,
 } from '@/services/api';
+import {
+  getMemoryCachedMessages,
+  getDiskCachedMessages,
+  saveCachedMessages,
+  appendCachedMessage,
+} from '@/services/chatCache';
+
+function formatApiMessages(apiMsgs: ApiMessage[]): Message[] {
+  return apiMsgs.map((m: ApiMessage) => ({
+    id: m.id.toString(),
+    type: 'text',
+    isOutgoing: m.is_outgoing,
+    text: m.text,
+    time: m.time,
+    isRead: true,
+    isDoubleCheck: m.is_outgoing,
+  }));
+}
 
 export default function ConversationScreen() {
   const router = useRouter();
@@ -30,28 +50,39 @@ export default function ConversationScreen() {
   const contactName = params.name || 'Botpro Bot';
   const contactInitials = params.initials || 'BO';
 
-  const [messages, setMessages] = useState<Message[]>(CONVERSATION_MESSAGES);
+  // 1. Vérifier immédiatement le Cache L1 (RAM synchrone 0ms)
+  const initialCache = getMemoryCachedMessages(chatId);
+  const [messages, setMessages] = useState<Message[]>(
+    initialCache ? formatApiMessages(initialCache) : []
+  );
+  const [loading, setLoading] = useState(!initialCache || initialCache.length === 0);
   const flatListRef = useRef<FlatList>(null);
 
-  // Charger les messages réels du chat depuis le serveur Go
+  // Charger les messages réels depuis le disque L2 puis synchroniser avec Supabase
   const loadMessages = useCallback(async () => {
-    const apiMsgs = await fetchMessages(chatId);
-    if (apiMsgs && apiMsgs.length > 0) {
-      const formatted: Message[] = apiMsgs.map((m: ApiMessage) => ({
-        id: m.id.toString(),
-        type: 'text',
-        isOutgoing: m.is_outgoing,
-        text: m.text,
-        time: m.time,
-        isRead: true,
-        isDoubleCheck: m.is_outgoing,
-      }));
-      setMessages(formatted);
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: false });
-      }, 100);
+    // A. Si pas de cache mémoire, vérifier le disque (AsyncStorage L2)
+    if (!initialCache) {
+      const diskMsgs = await getDiskCachedMessages(chatId);
+      if (diskMsgs && diskMsgs.length > 0) {
+        setMessages(formatApiMessages(diskMsgs));
+        setLoading(false);
+      }
     }
-  }, [chatId]);
+
+    // B. Revalidation en arrière-plan avec Supabase
+    try {
+      const apiMsgs = await fetchMessages(chatId);
+      if (apiMsgs) {
+        setMessages(formatApiMessages(apiMsgs));
+        await saveCachedMessages(chatId, apiMsgs);
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: false });
+        }, 100);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [chatId, initialCache]);
 
   useEffect(() => {
     loadMessages();
@@ -59,6 +90,7 @@ export default function ConversationScreen() {
     // Écouter les messages reçus en temps réel (bot ou automation externe)
     const unsubscribe = subscribeToRealtimeMessages((msg: ApiMessage) => {
       if (msg.chat_id === chatId) {
+        appendCachedMessage(chatId, msg);
         setMessages((prev) => {
           // Si le message existe déjà avec le même ID
           const exists = prev.some((m) => m.id === msg.id.toString());
@@ -132,9 +164,10 @@ export default function ConversationScreen() {
       flatListRef.current?.scrollToEnd({ animated: true });
     }, 50);
 
-    // 2. Envoi réel au serveur Go
+    // 2. Envoi réel à Supabase Edge Function
     const saved = await sendUserMessage(chatId, text);
     if (saved) {
+      appendCachedMessage(chatId, saved);
       setMessages((prev) => {
         // Si le message avec cet ID a déjà été inséré via WebSocket
         if (prev.some((m) => m.id === saved.id.toString())) {
@@ -173,24 +206,56 @@ export default function ConversationScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {/* Fil des messages aligné par le bas (style Telegram) */}
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={[styles.messagesList, { flexGrow: 1, justifyContent: 'flex-end' }]}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => {
-            flatListRef.current?.scrollToEnd({ animated: false });
-          }}
-          onLayout={() => {
-            flatListRef.current?.scrollToEnd({ animated: false });
-          }}
-        />
+        {loading ? (
+          <ConversationSkeleton />
+        ) : messages.length === 0 ? (
+          <View style={styles.botWelcomeContainer}>
+            <View style={styles.botWelcomeCard}>
+              <View style={styles.botAvatarContainer}>
+                <Text style={styles.botAvatarText}>{contactInitials}</Text>
+              </View>
+              <Text style={styles.botWelcomeTitle}>Que peut faire ce bot ?</Text>
+              <Text style={styles.botWelcomeDesc}>
+                {contactName.toLowerCase().includes('aiko')
+                  ? 'Assistante IA conversationnelle propulsée par Groq et Supabase. Pose-lui des questions, discute ou demande des conseils en français !'
+                  : contactName.toLowerCase().includes('botfather')
+                  ? 'Le bot officiel de Botpro pour créer de nouveaux bots et gérer leurs tokens et webhooks.'
+                  : 'Bot interactif Botpro conforme au protocole Telegram Bot API.'}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <MessageBubble message={item} />}
+            contentContainerStyle={[styles.messagesList, { flexGrow: 1, justifyContent: 'flex-end' }]}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }}
+            onLayout={() => {
+              flatListRef.current?.scrollToEnd({ animated: false });
+            }}
+          />
+        )}
 
-        {/* Barre de saisie en bas avec safe area pour les gestes mobiles */}
+        {/* Barre de saisie ou Bouton DÉMARRER style Telegram */}
         <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
-          <ChatInputBar onSendMessage={handleSendMessage} />
+          {!loading && messages.length === 0 ? (
+            <View style={styles.startBarContainer}>
+              <TouchableOpacity
+                style={styles.startButton}
+                onPress={() => handleSendMessage('/start')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.startButtonText}>DÉMARRER</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <ChatInputBar onSendMessage={handleSendMessage} />
+          )}
         </SafeAreaView>
       </KeyboardAvoidingView>
     </View>
@@ -212,7 +277,72 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
   },
+  botWelcomeContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  botWelcomeCard: {
+    backgroundColor: '#182533',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: '#242f3d',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  botAvatarContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#5288c1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  botAvatarText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  botWelcomeTitle: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  botWelcomeDesc: {
+    color: '#8e9dae',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
   bottomSafeArea: {
     backgroundColor: TelegramColors.base,
+  },
+  startBarContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: TelegramColors.base,
+  },
+  startButton: {
+    backgroundColor: '#5288c1',
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });

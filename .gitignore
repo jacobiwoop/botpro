@@ -21,4 +21,8 @@ reference/
 *.png
 !botbro-kt/**/*.png
 apk_botpro/
+.*_env
+*.env
+.env*
 
+supabase/.temp/
