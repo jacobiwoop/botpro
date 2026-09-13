@@ -47,7 +47,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.botpro.data.cache.ChatCache
-import com.example.botpro.data.mock.MockData
 import com.example.botpro.data.model.FileAttachment
 import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
@@ -90,11 +89,9 @@ fun ConversationScreen(
     // 1. Cache L1 synchrone à 0 ms
     val initialMemory = ChatCache.getMemoryCachedMessages(contactName)
     var messages by remember {
-        mutableStateOf<List<Message>>(
-            initialMemory ?: if (contactName == "Hernes Dav") MockData.conversationMessages else emptyList()
-        )
+        mutableStateOf<List<Message>>(initialMemory ?: emptyList())
     }
-    var isLoading by remember { mutableStateOf(initialMemory == null && contactName != "Hernes Dav") }
+    var isLoading by remember { mutableStateOf(initialMemory == null) }
     var selectedImageUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
 
@@ -111,40 +108,9 @@ fun ConversationScreen(
         // Récupération des messages réels depuis Supabase Cloud
         try {
             val remoteMsgs = com.example.botpro.data.supabase.SupabaseService.fetchMessages(effectiveChatId)
-            if (remoteMsgs.isNotEmpty()) {
-                messages = remoteMsgs
-                isLoading = false
-                ChatCache.saveCachedMessages(context, contactName, remoteMsgs)
-            } else if (messages.isEmpty()) {
-                val initialList = if (contactName == "BotFather") {
-                    listOf(
-                        Message(
-                            id = "bf_welcome",
-                            type = MessageType.TEXT,
-                            isOutgoing = false,
-                            text = "I can help you create and manage Telegram bots. If you're new to the Bot API, please see the manual.\n\nYou can control me by sending these commands:\n/newbot - create a new bot\n/mybots - edit your bots",
-                            time = "12:00",
-                            isRead = true
-                        )
-                    )
-                } else if (contactName == "Hernes Dav") {
-                    MockData.conversationMessages
-                } else {
-                    listOf(
-                        Message(
-                            id = "welcome_${System.currentTimeMillis()}",
-                            type = MessageType.TEXT,
-                            isOutgoing = false,
-                            text = "👋 Bonjour ! Je suis **$contactName** sur BotPro.\n\nEnvoyez un message ou une commande pour démarrer !",
-                            time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()),
-                            isRead = true
-                        )
-                    )
-                }
-                messages = initialList
-                isLoading = false
-                ChatCache.saveCachedMessages(context, contactName, initialList)
-            }
+            messages = remoteMsgs
+            isLoading = false
+            ChatCache.saveCachedMessages(context, contactName, remoteMsgs)
         } catch (e: Exception) {
             isLoading = false
         }
@@ -236,43 +202,9 @@ fun ConversationScreen(
             // Envoi réel vers Supabase Edge Function
             val sentMsg = com.example.botpro.data.supabase.SupabaseService.sendUserMessage(effectiveChatId, text)
             if (sentMsg != null) {
-                // Confirmer le message sortant avec double coche
+                // Confirmer le message sortant avec double coche et ID réel
                 messages = messages.map {
                     if (it.id == localId) it.copy(isDoubleCheck = true, id = sentMsg.id) else it
-                }
-            } else {
-                // Fallback simulation locale si hors-ligne
-                val isBot = contactName.contains("bot", ignoreCase = true) ||
-                            contactName.contains("aiko", ignoreCase = true) ||
-                            contactName == "BotFather"
-
-                if (isBot) {
-                    delay(700)
-                    val replyText = when {
-                        contactName == "BotFather" && text.startsWith("/newbot") ->
-                            "Alright, a new bot. How are we going to call it? Please choose a name for your bot."
-                        contactName == "BotFather" ->
-                            "BotFather: commande reçue. Tapez /newbot pour créer un bot ou /mybots pour administrer."
-                        text.startsWith("/start") ->
-                            "🤖 Bot démarré avec succès ! Je suis à votre service."
-                        text.contains("vocal", ignoreCase = true) ->
-                            "🎙️ Message vocal bien reçu et analysé."
-                        else ->
-                            "✅ Reçu 5/5 : « $text »"
-                    }
-
-                    val botReply = Message(
-                        id = "bot_reply_${System.currentTimeMillis()}",
-                        type = MessageType.TEXT,
-                        isOutgoing = false,
-                        text = replyText,
-                        time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()),
-                        isRead = true
-                    )
-                    val withReply = messages + botReply
-                    messages = withReply
-                    ChatCache.saveCachedMessages(context, contactName, withReply)
-                    listState.animateScrollToItem(0)
                 }
             }
         }

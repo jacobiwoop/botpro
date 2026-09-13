@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.botpro.data.api.ApiClient
 import com.example.botpro.data.cache.ChatCache
-import com.example.botpro.data.mock.MockData
 import com.example.botpro.data.model.AvatarType
 import com.example.botpro.data.model.ChatItem
 import com.example.botpro.theme.TelegramColors
@@ -49,10 +48,10 @@ fun ChatListScreen(
     val scope = rememberCoroutineScope()
     var showSearchModal by remember { mutableStateOf(false) }
 
-    // 1. Initialisation instantanée 0 ms via Cache L1 (RAM) ou Mock initial
+    // 1. Initialisation instantanée 0 ms via Cache L1 (RAM)
     val memoryChats = ChatCache.getMemoryCachedChats()
     var chatList by remember {
-        mutableStateOf(memoryChats ?: MockData.chatListData)
+        mutableStateOf(memoryChats ?: emptyList())
     }
 
     // 2. Stratégie SWR : Lecture disque L2 puis revalidation réseau depuis Supabase Cloud
@@ -68,21 +67,8 @@ fun ChatListScreen(
         try {
             val sbChats = com.example.botpro.data.supabase.SupabaseService.fetchChats()
             if (sbChats.isNotEmpty()) {
-                val merged = mutableListOf<ChatItem>()
-                val seenIds = mutableSetOf<String>()
-                sbChats.forEach { chat ->
-                    if (seenIds.add(chat.id)) {
-                        merged.add(chat)
-                    }
-                }
-                MockData.chatListData.forEach { defaultChat ->
-                    val uniqueId = if (seenIds.contains(defaultChat.id)) "mock_${defaultChat.id}" else defaultChat.id
-                    if (seenIds.add(uniqueId) && merged.none { it.name.equals(defaultChat.name, ignoreCase = true) }) {
-                        merged.add(defaultChat.copy(id = uniqueId))
-                    }
-                }
-                chatList = merged
-                ChatCache.saveCachedChats(context, merged)
+                chatList = sbChats
+                ChatCache.saveCachedChats(context, sbChats)
             }
         } catch (e: Exception) {
             // Conserver l'état actuel en cas d'erreur

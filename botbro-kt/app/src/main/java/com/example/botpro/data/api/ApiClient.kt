@@ -18,36 +18,13 @@ object ApiClient {
     private const val TAG = "ApiClient"
     var baseUrl: String = "http://192.168.240.1:8080"
 
-    private val inMemoryBots = mutableListOf(
-        ApiBot(
-            id = 1L,
-            token = "123456:BOTPRO_TEST_TOKEN",
-            username = "botpro_bot",
-            firstName = "Botpro Bot",
-            about = "Bot officiel BotPro"
-        ),
-        ApiBot(
-            id = 2L,
-            token = "789123964:a7153845697a9a53a118213758b93569",
-            username = "automation_bot",
-            firstName = "Automation Bot",
-            about = "Bot d'automatisation des tâches"
-        ),
-        ApiBot(
-            id = 3L,
-            token = "789124917:c455a17929c5da757e2f17b305ac8c80",
-            username = "aikobot",
-            firstName = "aiko",
-            about = "Assistant conversationnel Aiko"
-        )
-    )
+    private val inMemoryBots = mutableListOf<ApiBot>()
 
     var currentUser: ApiUser? = ApiUser(
-        id = 1L,
-        email = "darren@botpro.org",
-        firstName = "darren",
-        lastName = "lee",
-        username = "darrenlee"
+        id = 3L,
+        email = "desmarcwoop@gmail.com",
+        firstName = "Desmarc",
+        username = "desmarc"
     )
 
     private fun openConnection(endpoint: String, method: String): HttpURLConnection {
@@ -64,18 +41,14 @@ object ApiClient {
     suspend fun fetchBots(): List<ApiBot> = withContext(Dispatchers.IO) {
         try {
             val sbBots = com.example.botpro.data.supabase.SupabaseService.fetchBots()
-            if (sbBots.isNotEmpty()) {
-                synchronized(inMemoryBots) {
-                    inMemoryBots.clear()
-                    inMemoryBots.addAll(sbBots)
-                }
-                return@withContext sbBots
+            synchronized(inMemoryBots) {
+                inMemoryBots.clear()
+                inMemoryBots.addAll(sbBots)
             }
+            sbBots
         } catch (e: Exception) {
-            Log.w(TAG, "Supabase fetchBots failed, fallback to local: ${e.message}")
-        }
-        synchronized(inMemoryBots) {
-            return@withContext inMemoryBots.toList()
+            Log.w(TAG, "Supabase fetchBots failed: ${e.message}")
+            emptyList()
         }
     }
 
@@ -86,26 +59,12 @@ object ApiClient {
                 synchronized(inMemoryBots) {
                     inMemoryBots.add(0, created)
                 }
-                return@withContext created
             }
+            created
         } catch (e: Exception) {
-            Log.w(TAG, "Supabase createBot failed, fallback: ${e.message}")
+            Log.w(TAG, "Supabase createBot failed: ${e.message}")
+            null
         }
-
-        // Fallback local creation
-        val newId = System.currentTimeMillis()
-        val mockToken = "${newId % 1000000000}:AAH${java.util.UUID.randomUUID().toString().replace("-", "")}"
-        val localBot = ApiBot(
-            id = newId,
-            token = mockToken,
-            username = username,
-            firstName = firstName,
-            about = about
-        )
-        synchronized(inMemoryBots) {
-            inMemoryBots.add(0, localBot)
-        }
-        localBot
     }
 
     suspend fun deleteBot(id: Long): Boolean = withContext(Dispatchers.IO) {
