@@ -58,7 +58,7 @@ import kotlinx.coroutines.launch
 fun BotSearchModal(
     visible: Boolean,
     onClose: () -> Unit,
-    onSelectBot: (chatId: String, botName: String, botUsername: String) -> Unit
+    onSelectBot: (botId: Long, botName: String, botUsername: String) -> Unit
 ) {
     if (!visible) return
 
@@ -219,14 +219,7 @@ fun BotSearchModal(
                                     .fillMaxWidth()
                                     .clickable {
                                         onClose()
-                                        scope.launch {
-                                            val chatId = com.example.botpro.data.supabase.SupabaseService.getOrCreateBotChat(
-                                                bot.id,
-                                                bot.firstName,
-                                                bot.username
-                                            )
-                                            onSelectBot(chatId.toString(), bot.firstName, bot.username)
-                                        }
+                                        onSelectBot(bot.id, bot.firstName, bot.username)
                                     }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically

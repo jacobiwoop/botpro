@@ -169,11 +169,13 @@ fun ChatListScreen(
             BotSearchModal(
                 visible = showSearchModal,
                 onClose = { showSearchModal = false },
-                onSelectBot = { chatIdStr, botName, _ ->
+                onSelectBot = { botId, botName, botUsername ->
                     showSearchModal = false
-                    val initials = botName.take(2).uppercase()
-                    val parsedId = chatIdStr.toLongOrNull()
-                    onOpenChat(botName, initials, parsedId)
+                    scope.launch {
+                        val chatId = com.example.botpro.data.supabase.SupabaseService.getOrCreateBotChat(botId, botName, botUsername)
+                        val initials = botName.take(2).uppercase()
+                        onOpenChat(botName, initials, chatId)
+                    }
                 }
             )
         }
