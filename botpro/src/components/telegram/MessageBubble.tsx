@@ -1,14 +1,64 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Message } from '@/types/conversation';
 
 interface MessageBubbleProps {
   message: Message;
+  onImageClick?: (imageUrl: string) => void;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onImageClick }: MessageBubbleProps) {
   const isOutgoing = message.isOutgoing;
+
+  // Rendu des séparateurs de date (ex: "Aujourd'hui", "12 septembre")
+  if (message.type === 'date_separator') {
+    return (
+      <View style={styles.dateSeparatorWrapper}>
+        <View style={styles.dateSeparatorPill}>
+          <Text style={styles.dateSeparatorText}>{message.dateText || message.text}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Rendu de la bulle d'image / photo
+  if (message.type === 'image' && message.imageUrl) {
+    return (
+      <View
+        style={[
+          styles.bubbleWrapper,
+          isOutgoing ? styles.alignRight : styles.alignLeft,
+        ]}
+      >
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => onImageClick && message.imageUrl && onImageClick(message.imageUrl)}
+          style={[styles.imageBubble, isOutgoing ? styles.bubbleOut : styles.bubbleIn]}
+        >
+          <Image
+            source={{ uri: message.imageUrl }}
+            style={styles.imageContent}
+            resizeMode="cover"
+          />
+          {message.text ? (
+            <Text style={styles.imageCaption}>{message.text}</Text>
+          ) : null}
+          <View style={styles.imageMetaBadge}>
+            <Text style={styles.imageMetaTime}>{message.time}</Text>
+            {isOutgoing && (
+              <Ionicons
+                name={message.isDoubleCheck ? 'checkmark-done' : 'checkmark'}
+                size={13}
+                color="#ffffff"
+                style={{ marginLeft: 3 }}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   // Rendu de la carte de fichier / photo jointe
   if (message.type === 'file' && message.file) {
@@ -20,10 +70,24 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         ]}
       >
         <View style={[styles.fileCard, isOutgoing ? styles.fileOut : styles.fileIn]}>
-          <Image
-            source={{ uri: message.file.thumbnailUri }}
-            style={styles.fileThumbnail}
-          />
+          {message.file.thumbnailUri ? (
+            <Image
+              source={{ uri: message.file.thumbnailUri }}
+              style={styles.fileThumbnail}
+            />
+          ) : (
+            <View style={[styles.fileThumbnail, styles.fileIconPlaceholder]}>
+              <Ionicons
+                name={
+                  message.file.name.endsWith('.mp3') || message.file.name.endsWith('.wav')
+                    ? 'musical-notes'
+                    : 'document-text'
+                }
+                size={28}
+                color="#ffffff"
+              />
+            </View>
+          )}
           <View style={styles.fileInfo}>
             <Text style={styles.fileName} numberOfLines={1}>
               {message.file.name}
@@ -196,6 +260,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#1c2938',
   },
+  fileIconPlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#3390ec',
+  },
   fileInfo: {
     flex: 1,
     marginLeft: 10,
@@ -217,5 +286,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+
+  // Styles Séparateur de date
+  dateSeparatorWrapper: {
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  dateSeparatorPill: {
+    backgroundColor: 'rgba(17, 25, 33, 0.72)',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  dateSeparatorText: {
+    color: '#d6e2ee',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Styles Bulle d'Image
+  imageBubble: {
+    width: 250,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  imageContent: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#17212b',
+  },
+  imageCaption: {
+    color: '#ffffff',
+    fontSize: 14,
+    paddingHorizontal: 10,
+    paddingTop: 6,
+    paddingBottom: 4,
+  },
+  imageMetaBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  imageMetaTime: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '500',
   },
 });

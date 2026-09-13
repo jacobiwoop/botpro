@@ -1,4 +1,4 @@
-export type MessageType = 'text' | 'file';
+export type MessageType = 'text' | 'file' | 'image' | 'date_separator';
 
 export interface ReplyQuote {
   senderName: string;
@@ -21,4 +21,7 @@ export interface Message {
   isDoubleCheck?: boolean;
   replyQuote?: ReplyQuote;
   file?: FileAttachment;
+  imageUrl?: string;
+  dateText?: string;
 }
+

@@ -23,11 +23,11 @@ Deno.serve(async (req) => {
   if (path.endsWith("/dispatch-user-message") && req.method === "POST") {
     try {
       const body = await req.json();
-      const { chat_id, user_id, text } = body;
+      const { chat_id, user_id, text, media_type, media_url, file_name, file_size } = body;
 
-      if (!chat_id || !user_id || !text) {
+      if (!chat_id || !user_id || (!text && !media_url)) {
         return Response.json(
-          { ok: false, error: "chat_id, user_id, and text are required" },
+          { ok: false, error: "chat_id, user_id, and either text or media_url are required" },
           { status: 400, headers: corsHeaders }
         );
       }
@@ -60,13 +60,17 @@ Deno.serve(async (req) => {
         username: "desmarc",
       };
 
-      // Insertion du message de l'utilisateur
+      // Insertion du message de l'utilisateur avec multimédia
       const { data: insertedMsg, error: insertErr } = await supabase
         .from("messages")
         .insert({
           chat_id,
           from_user_id: actualSenderId,
-          text,
+          text: text || "",
+          media_type: media_type || "text",
+          media_url: media_url || null,
+          file_name: file_name || null,
+          file_size: file_size || null,
           is_bot: false,
         })
         .select()
@@ -94,24 +98,61 @@ Deno.serve(async (req) => {
           .single();
 
         if (webhook && webhook.url) {
+          // Construction du message Telegram structuré
+          const telegramMessage: any = {
+            message_id: insertedMsg.message_id,
+            from: {
+              id: senderInfo.id,
+              is_bot: false,
+              first_name: senderInfo.first_name || "Desmarc",
+              username: senderInfo.username || "desmarc",
+            },
+            chat: {
+              id: chat_id,
+              type: "private",
+            },
+            date: Math.floor(new Date(insertedMsg.created_at).getTime() / 1000),
+          };
+
+          if (text) {
+            telegramMessage.text = text;
+          }
+
+          if (media_url) {
+            const mType = (media_type || "").toLowerCase();
+            if (mType === "photo" || mType === "image") {
+              telegramMessage.photo = [
+                {
+                  file_id: `photo_${insertedMsg.id}`,
+                  file_unique_id: `uphoto_${insertedMsg.id}`,
+                  file_size: 0,
+                  file_url: media_url,
+                },
+              ];
+              if (text) telegramMessage.caption = text;
+            } else if (mType === "audio" || mType === "music") {
+              telegramMessage.audio = {
+                file_id: `audio_${insertedMsg.id}`,
+                file_name: file_name || "audio.mp3",
+                file_size: file_size || "",
+                file_url: media_url,
+              };
+              if (text) telegramMessage.caption = text;
+            } else if (mType === "document" || mType === "file") {
+              telegramMessage.document = {
+                file_id: `doc_${insertedMsg.id}`,
+                file_name: file_name || "document",
+                file_size: file_size || "",
+                file_url: media_url,
+              };
+              if (text) telegramMessage.caption = text;
+            }
+          }
+
           // Création de l'update
           const updatePayload = {
             update_id: Date.now(),
-            message: {
-              message_id: insertedMsg.message_id,
-              from: {
-                id: senderInfo.id,
-                is_bot: false,
-                first_name: senderInfo.first_name || "Desmarc",
-                username: senderInfo.username || "desmarc",
-              },
-              chat: {
-                id: chat_id,
-                type: "private",
-              },
-              date: Math.floor(new Date(insertedMsg.created_at).getTime() / 1000),
-              text: text,
-            },
+            message: telegramMessage,
           };
 
           // Sauvegarde de l'update dans la table updates
@@ -162,16 +203,32 @@ Deno.serve(async (req) => {
               const hookJson = JSON.parse(hookText);
               if (
                 hookJson &&
-                hookJson.method === "sendMessage" &&
-                hookJson.text
+                (hookJson.text || hookJson.photo || hookJson.document || hookJson.audio || hookJson.method)
               ) {
+                let replyMediaType = "text";
+                let replyMediaUrl = null;
+                let replyText = hookJson.text || hookJson.caption || "";
+
+                if (hookJson.method === "sendPhoto" || hookJson.photo) {
+                  replyMediaType = "photo";
+                  replyMediaUrl = typeof hookJson.photo === "string" ? hookJson.photo : (hookJson.photo?.[0]?.file_url || null);
+                } else if (hookJson.method === "sendDocument" || hookJson.document) {
+                  replyMediaType = "document";
+                  replyMediaUrl = typeof hookJson.document === "string" ? hookJson.document : (hookJson.document?.file_url || null);
+                } else if (hookJson.method === "sendAudio" || hookJson.audio) {
+                  replyMediaType = "audio";
+                  replyMediaUrl = typeof hookJson.audio === "string" ? hookJson.audio : (hookJson.audio?.file_url || null);
+                }
+
                 // Le bot a renvoyé directement sa réponse dans le body HTTP !
                 const { data: directReply } = await supabase
                   .from("messages")
                   .insert({
                     chat_id: Number(hookJson.chat_id) || chat_id,
                     from_user_id: botId,
-                    text: hookJson.text,
+                    text: replyText,
+                    media_type: replyMediaType,
+                    media_url: replyMediaUrl,
                     reply_to_message_id: hookJson.reply_to_message_id || insertedMsg.message_id,
                     is_bot: true,
                   })
@@ -340,6 +397,166 @@ Deno.serve(async (req) => {
             },
             date: Math.floor(new Date(msg.created_at).getTime() / 1000),
             text: msg.text,
+          },
+        },
+        { headers: corsHeaders }
+      );
+    }
+
+    case "sendPhoto": {
+      if (req.method !== "POST") {
+        return Response.json(
+          { ok: false, error_code: 405, description: "Method Not Allowed" },
+          { status: 405, headers: corsHeaders }
+        );
+      }
+      const body = await req.json().catch(() => ({}));
+      const { chat_id, photo, caption, reply_to_message_id } = body;
+      if (!chat_id || !photo) {
+        return Response.json(
+          { ok: false, error_code: 400, description: "chat_id and photo are required" },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      const { data: msg, error: msgErr } = await supabase
+        .from("messages")
+        .insert({
+          chat_id: Number(chat_id),
+          from_user_id: bot.id,
+          text: caption || "",
+          media_type: "photo",
+          media_url: photo,
+          reply_to_message_id: reply_to_message_id ? Number(reply_to_message_id) : null,
+          is_bot: true,
+        })
+        .select()
+        .single();
+
+      if (msgErr || !msg) {
+        return Response.json(
+          { ok: false, error_code: 500, description: msgErr?.message || "Insert failed" },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      return Response.json(
+        {
+          ok: true,
+          result: {
+            message_id: msg.message_id,
+            from: { id: bot.id, is_bot: true, first_name: botUser?.first_name, username: botUser?.username },
+            chat: { id: Number(chat_id), type: "private" },
+            date: Math.floor(new Date(msg.created_at).getTime() / 1000),
+            photo: [{ file_id: `photo_${msg.id}`, file_url: photo }],
+            caption: msg.text,
+          },
+        },
+        { headers: corsHeaders }
+      );
+    }
+
+    case "sendDocument": {
+      if (req.method !== "POST") {
+        return Response.json(
+          { ok: false, error_code: 405, description: "Method Not Allowed" },
+          { status: 405, headers: corsHeaders }
+        );
+      }
+      const body = await req.json().catch(() => ({}));
+      const { chat_id, document, caption, file_name, file_size, reply_to_message_id } = body;
+      if (!chat_id || !document) {
+        return Response.json(
+          { ok: false, error_code: 400, description: "chat_id and document are required" },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      const { data: msg, error: msgErr } = await supabase
+        .from("messages")
+        .insert({
+          chat_id: Number(chat_id),
+          from_user_id: bot.id,
+          text: caption || "",
+          media_type: "document",
+          media_url: document,
+          file_name: file_name || "document",
+          file_size: file_size || null,
+          reply_to_message_id: reply_to_message_id ? Number(reply_to_message_id) : null,
+          is_bot: true,
+        })
+        .select()
+        .single();
+
+      if (msgErr || !msg) {
+        return Response.json(
+          { ok: false, error_code: 500, description: msgErr?.message || "Insert failed" },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      return Response.json(
+        {
+          ok: true,
+          result: {
+            message_id: msg.message_id,
+            from: { id: bot.id, is_bot: true, first_name: botUser?.first_name, username: botUser?.username },
+            chat: { id: Number(chat_id), type: "private" },
+            date: Math.floor(new Date(msg.created_at).getTime() / 1000),
+            document: { file_id: `doc_${msg.id}`, file_name: msg.file_name, file_url: document },
+            caption: msg.text,
+          },
+        },
+        { headers: corsHeaders }
+      );
+    }
+
+    case "sendAudio": {
+      if (req.method !== "POST") {
+        return Response.json(
+          { ok: false, error_code: 405, description: "Method Not Allowed" },
+          { status: 405, headers: corsHeaders }
+        );
+      }
+      const body = await req.json().catch(() => ({}));
+      const { chat_id, audio, caption, file_name, file_size, reply_to_message_id } = body;
+      if (!chat_id || !audio) {
+        return Response.json(
+          { ok: false, error_code: 400, description: "chat_id and audio are required" },
+          { status: 400, headers: corsHeaders }
+        );
+      }
+      const { data: msg, error: msgErr } = await supabase
+        .from("messages")
+        .insert({
+          chat_id: Number(chat_id),
+          from_user_id: bot.id,
+          text: caption || "",
+          media_type: "audio",
+          media_url: audio,
+          file_name: file_name || "audio.mp3",
+          file_size: file_size || null,
+          reply_to_message_id: reply_to_message_id ? Number(reply_to_message_id) : null,
+          is_bot: true,
+        })
+        .select()
+        .single();
+
+      if (msgErr || !msg) {
+        return Response.json(
+          { ok: false, error_code: 500, description: msgErr?.message || "Insert failed" },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+
+      return Response.json(
+        {
+          ok: true,
+          result: {
+            message_id: msg.message_id,
+            from: { id: bot.id, is_bot: true, first_name: botUser?.first_name, username: botUser?.username },
+            chat: { id: Number(chat_id), type: "private" },
+            date: Math.floor(new Date(msg.created_at).getTime() / 1000),
+            audio: { file_id: `audio_${msg.id}`, file_name: msg.file_name, file_url: audio },
+            caption: msg.text,
           },
         },
         { headers: corsHeaders }

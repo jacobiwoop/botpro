@@ -5,9 +5,10 @@ import { TelegramColors } from '@/constants/telegramTheme';
 
 interface ChatInputBarProps {
   onSendMessage?: (text: string) => void;
+  onAttachmentPress?: () => void;
 }
 
-export function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
+export function ChatInputBar({ onSendMessage, onAttachmentPress }: ChatInputBarProps) {
   const [text, setText] = useState('');
 
   const handleSend = () => {
@@ -20,7 +21,11 @@ export function ChatInputBar({ onSendMessage }: ChatInputBarProps) {
   return (
     <View style={styles.container}>
       {/* Bouton pièce jointe (trombone) */}
-      <TouchableOpacity style={styles.iconButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <TouchableOpacity
+        style={styles.iconButton}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        onPress={onAttachmentPress}
+      >
         <Feather name="paperclip" size={22} color="#6f8295" />
       </TouchableOpacity>
 
