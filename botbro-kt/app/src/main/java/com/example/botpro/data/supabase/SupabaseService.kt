@@ -3,6 +3,7 @@ package com.example.botpro.data.supabase
 import android.util.Log
 import com.example.botpro.data.model.AvatarType
 import com.example.botpro.data.model.ChatItem
+import com.example.botpro.data.model.FileAttachment
 import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
 import com.example.botpro.data.models.ApiBot
@@ -72,11 +73,27 @@ object SupabaseService {
                         try {
                             val record = json.decodeFromJsonElement(SupabaseMessageRow.serializer(), action.record)
                             val chatId = record.chatId
+                            val msgType = when (record.mediaType?.lowercase()) {
+                                "photo", "image" -> MessageType.IMAGE
+                                "document", "file" -> MessageType.FILE
+                                "audio", "voice" -> MessageType.VOICE
+                                else -> MessageType.TEXT
+                            }
+                            val fileAtt = if (msgType == MessageType.FILE) {
+                                FileAttachment(
+                                    name = record.fileName ?: "Document",
+                                    size = record.fileSize ?: "Fichier",
+                                    thumbnailUri = record.mediaUrl ?: ""
+                                )
+                            } else null
+
                             val msg = Message(
                                 id = (record.id ?: System.currentTimeMillis()).toString(),
-                                type = MessageType.TEXT,
+                                type = msgType,
                                 isOutgoing = !record.isBot && (record.fromUserId == currentUser.id || (record.fromUserId != null && record.fromUserId != 2L)),
-                                text = record.text,
+                                text = record.text ?: (if (msgType == MessageType.IMAGE) "Photo 📸" else ""),
+                                imageUrl = if (msgType == MessageType.IMAGE) record.mediaUrl else null,
+                                file = fileAtt,
                                 time = formatIsoTime(record.createdAt),
                                 isRead = true,
                                 isDoubleCheck = true
@@ -184,8 +201,14 @@ object SupabaseService {
                     }.decodeList<SupabaseMessageRow>()
 
                     if (msgs.isNotEmpty()) {
-                        lastMsgText = msgs[0].text
-                        lastMsgTime = formatIsoTime(msgs[0].createdAt)
+                        val m = msgs[0]
+                        lastMsgText = when (m.mediaType?.lowercase()) {
+                            "photo", "image" -> "📷 Photo"
+                            "document", "file" -> "📎 Document"
+                            "audio", "voice" -> "🎤 Message vocal"
+                            else -> m.text ?: "Message"
+                        }
+                        lastMsgTime = formatIsoTime(m.createdAt)
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "Failed to load latest msg for chat ${c.id}: ${e.message}")
@@ -224,11 +247,27 @@ object SupabaseService {
             }.decodeList<SupabaseMessageRow>()
 
             rows.map { r ->
+                val msgType = when (r.mediaType?.lowercase()) {
+                    "photo", "image" -> MessageType.IMAGE
+                    "document", "file" -> MessageType.FILE
+                    "audio", "voice" -> MessageType.VOICE
+                    else -> MessageType.TEXT
+                }
+                val fileAtt = if (msgType == MessageType.FILE) {
+                    FileAttachment(
+                        name = r.fileName ?: "Document",
+                        size = r.fileSize ?: "Fichier",
+                        thumbnailUri = r.mediaUrl ?: ""
+                    )
+                } else null
+
                 Message(
                     id = (r.id ?: System.currentTimeMillis()).toString(),
-                    type = MessageType.TEXT,
+                    type = msgType,
                     isOutgoing = !r.isBot && (r.fromUserId == currentUser.id || (r.fromUserId != null && r.fromUserId != 2L)),
-                    text = r.text,
+                    text = r.text ?: (if (msgType == MessageType.IMAGE) "Photo 📸" else ""),
+                    imageUrl = if (msgType == MessageType.IMAGE) r.mediaUrl else null,
+                    file = fileAtt,
                     time = formatIsoTime(r.createdAt),
                     isRead = true,
                     isDoubleCheck = true
@@ -240,7 +279,73 @@ object SupabaseService {
         }
     }
 
-    suspend fun sendUserMessage(chatId: Long, text: String): Message? = withContext(Dispatchers.IO) {
+    suspend fun uploadChatMedia(
+        context: android.content.Context,
+        uri: android.net.Uri,
+        mimeType: String = "image/jpeg",
+        customFileName: String? = null
+    ): Triple<String, String, String>? = withContext(Dispatchers.IO) {
+        try {
+            val ext = if (customFileName != null && customFileName.contains(".")) {
+                customFileName.substringAfterLast(".")
+            } else if (mimeType.contains("png")) {
+                "png"
+            } else if (mimeType.contains("pdf")) {
+                "pdf"
+            } else {
+                "jpg"
+            }
+            val finalName = customFileName ?: "media_${System.currentTimeMillis()}.$ext"
+            val filePath = "uploads/${System.currentTimeMillis()}_$finalName"
+            val uploadUrl = "${SupabaseClientProvider.SUPABASE_URL}/storage/v1/object/chat-media/$filePath"
+
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            if (bytes == null || bytes.isEmpty()) {
+                Log.w(TAG, "Empty file bytes for URI: $uri")
+                return@withContext null
+            }
+
+            val sizeKb = bytes.size / 1024
+            val sizeStr = if (sizeKb > 1024) String.format(java.util.Locale.US, "%.1f MB", sizeKb / 1024.0) else "$sizeKb KB"
+
+            val conn = URL(uploadUrl).openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 15000
+            conn.readTimeout = 30000
+            conn.setRequestProperty("Content-Type", mimeType)
+            conn.setRequestProperty("apikey", SupabaseClientProvider.SUPABASE_ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer ${SupabaseClientProvider.SUPABASE_ANON_KEY}")
+            conn.doOutput = true
+
+            conn.outputStream.use { os ->
+                os.write(bytes)
+                os.flush()
+            }
+
+            val code = conn.responseCode
+            if (code in 200..299) {
+                val publicUrl = "${SupabaseClientProvider.SUPABASE_URL}/storage/v1/object/public/chat-media/$filePath"
+                Log.i(TAG, "Upload success: $publicUrl")
+                return@withContext Triple(publicUrl, finalName, sizeStr)
+            } else {
+                val err = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                Log.w(TAG, "Storage upload failed with code $code: $err")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error uploading chat media: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun sendUserMessage(
+        chatId: Long,
+        text: String,
+        mediaType: String = "text",
+        mediaUrl: String? = null,
+        fileName: String? = null,
+        fileSize: String? = null
+    ): Message? = withContext(Dispatchers.IO) {
         try {
             val url = URL(SupabaseClientProvider.DISPATCH_URL)
             val conn = url.openConnection() as HttpURLConnection
@@ -256,6 +361,10 @@ object SupabaseService {
                 put("chat_id", chatId)
                 put("user_id", currentUser.id)
                 put("text", text)
+                put("media_type", mediaType)
+                if (mediaUrl != null) put("media_url", mediaUrl)
+                if (fileName != null) put("file_name", fileName)
+                if (fileSize != null) put("file_size", fileSize)
             }.toString()
 
             OutputStreamWriter(conn.outputStream, "UTF-8").use { it.write(payload) }
@@ -266,11 +375,27 @@ object SupabaseService {
                 val parsed = json.decodeFromString(DispatchMessageResponse.serializer(), resp)
                 val m = parsed.message
                 if (m != null) {
+                    val msgType = when (m.mediaType?.lowercase()) {
+                        "photo", "image" -> MessageType.IMAGE
+                        "document", "file" -> MessageType.FILE
+                        "audio", "voice" -> MessageType.VOICE
+                        else -> MessageType.TEXT
+                    }
+                    val fileAtt = if (msgType == MessageType.FILE) {
+                        FileAttachment(
+                            name = m.fileName ?: "Document",
+                            size = m.fileSize ?: "Fichier",
+                            thumbnailUri = m.mediaUrl ?: ""
+                        )
+                    } else null
+
                     return@withContext Message(
                         id = (m.id ?: System.currentTimeMillis()).toString(),
-                        type = MessageType.TEXT,
+                        type = msgType,
                         isOutgoing = true,
-                        text = m.text,
+                        text = m.text ?: (if (msgType == MessageType.IMAGE) "Photo 📸" else ""),
+                        imageUrl = if (msgType == MessageType.IMAGE) m.mediaUrl else null,
+                        file = fileAtt,
                         time = formatIsoTime(m.createdAt),
                         isRead = true,
                         isDoubleCheck = true

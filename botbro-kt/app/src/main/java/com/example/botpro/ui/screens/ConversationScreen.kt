@@ -137,8 +137,9 @@ fun ConversationScreen(
     ) { uri: Uri? ->
         uri?.let {
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            val localId = "msg_${System.currentTimeMillis()}"
             val newMessage = Message(
-                id = "msg_${System.currentTimeMillis()}",
+                id = localId,
                 type = MessageType.IMAGE,
                 isOutgoing = true,
                 imageUrl = it.toString(),
@@ -151,6 +152,28 @@ fun ConversationScreen(
             scope.launch {
                 ChatCache.saveCachedMessages(context, contactName, updated)
                 listState.animateScrollToItem(0)
+
+                val uploadRes = com.example.botpro.data.supabase.SupabaseService.uploadChatMedia(
+                    context = context,
+                    uri = it,
+                    mimeType = "image/jpeg"
+                )
+                if (uploadRes != null) {
+                    val publicUrl = uploadRes.first
+                    val sentMsg = com.example.botpro.data.supabase.SupabaseService.sendUserMessage(
+                        chatId = effectiveChatId,
+                        text = "Photo partagée 📸",
+                        mediaType = "photo",
+                        mediaUrl = publicUrl,
+                        fileName = uploadRes.second,
+                        fileSize = uploadRes.third
+                    )
+                    if (sentMsg != null) {
+                        messages = messages.map { m ->
+                            if (m.id == localId) m.copy(isDoubleCheck = true, id = sentMsg.id, imageUrl = publicUrl) else m
+                        }
+                    }
+                }
             }
         }
     }
@@ -160,15 +183,18 @@ fun ConversationScreen(
     ) { uri: Uri? ->
         uri?.let {
             val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+            val localId = "msg_${System.currentTimeMillis()}"
+            val defaultName = "Document_${System.currentTimeMillis()}.pdf"
             val newMessage = Message(
-                id = "msg_${System.currentTimeMillis()}",
+                id = localId,
                 type = MessageType.FILE,
                 isOutgoing = true,
                 file = FileAttachment(
-                    name = "Document_Partagé.pdf",
-                    size = "2.4 MB",
+                    name = defaultName,
+                    size = "Fichier",
                     thumbnailUri = ""
                 ),
+                text = defaultName,
                 time = currentTime,
                 isDoubleCheck = false
             )
@@ -177,6 +203,37 @@ fun ConversationScreen(
             scope.launch {
                 ChatCache.saveCachedMessages(context, contactName, updated)
                 listState.animateScrollToItem(0)
+
+                val uploadRes = com.example.botpro.data.supabase.SupabaseService.uploadChatMedia(
+                    context = context,
+                    uri = it,
+                    mimeType = "application/pdf",
+                    customFileName = defaultName
+                )
+                if (uploadRes != null) {
+                    val publicUrl = uploadRes.first
+                    val sentMsg = com.example.botpro.data.supabase.SupabaseService.sendUserMessage(
+                        chatId = effectiveChatId,
+                        text = uploadRes.second,
+                        mediaType = "document",
+                        mediaUrl = publicUrl,
+                        fileName = uploadRes.second,
+                        fileSize = uploadRes.third
+                    )
+                    if (sentMsg != null) {
+                        messages = messages.map { m ->
+                            if (m.id == localId) m.copy(
+                                isDoubleCheck = true,
+                                id = sentMsg.id,
+                                file = FileAttachment(
+                                    name = uploadRes.second,
+                                    size = uploadRes.third,
+                                    thumbnailUri = publicUrl
+                                )
+                            ) else m
+                        }
+                    }
+                }
             }
         }
     }

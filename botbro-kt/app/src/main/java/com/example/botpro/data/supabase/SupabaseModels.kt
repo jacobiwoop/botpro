@@ -18,7 +18,11 @@ data class SupabaseMessageRow(
     @SerialName("message_id") val messageId: Long? = null,
     @SerialName("chat_id") val chatId: Long,
     @SerialName("from_user_id") val fromUserId: Long? = null,
-    val text: String,
+    val text: String? = null,
+    @SerialName("media_type") val mediaType: String? = "text",
+    @SerialName("media_url") val mediaUrl: String? = null,
+    @SerialName("file_name") val fileName: String? = null,
+    @SerialName("file_size") val fileSize: String? = null,
     @SerialName("is_bot") val isBot: Boolean = false,
     @SerialName("reply_to_message_id") val replyToMessageId: Long? = null,
     @SerialName("created_at") val createdAt: String? = null
@@ -95,7 +99,11 @@ data class SupabaseUserRow(
 data class DispatchMessagePayload(
     @SerialName("chat_id") val chatId: Long,
     @SerialName("user_id") val userId: Long,
-    val text: String
+    val text: String? = "",
+    @SerialName("media_type") val mediaType: String? = "text",
+    @SerialName("media_url") val mediaUrl: String? = null,
+    @SerialName("file_name") val fileName: String? = null,
+    @SerialName("file_size") val fileSize: String? = null
 )
 
 @Serializable
