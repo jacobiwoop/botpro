@@ -128,11 +128,9 @@ fun ChatListScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(TelegramColors.Primary)
+                        .background(TelegramColors.Header)
                 ) {
                     TelegramHeader(
-                        title = "BotPro",
-                        unreadCount = chatList.sumOf { it.unreadCount },
                         onMenuClick = {
                             scope.launch { drawerState.open() }
                         },
