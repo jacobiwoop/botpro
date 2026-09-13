@@ -396,6 +396,10 @@ fun ConversationScreen(
                             listState.animateScrollToItem(0)
                         }
                     }
+                    AttachmentType.CAMERA -> {
+                        // Action prise de photo caméra
+                    }
+                    else -> {}
                 }
             }
         )
