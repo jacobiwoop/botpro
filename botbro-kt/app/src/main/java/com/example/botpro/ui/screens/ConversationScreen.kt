@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -328,10 +329,10 @@ fun ConversationScreen(
                     .fillMaxWidth(),
                 contentPadding = PaddingValues(vertical = 8.dp)
             ) {
-                items(
+                itemsIndexed(
                     items = messages.asReversed(),
-                    key = { it.id }
-                ) { message ->
+                    key = { index, message -> "${message.id}_$index" }
+                ) { _, message ->
                     MessageBubble(
                         message = message,
                         onImageClick = { selectedImageUrl = it }

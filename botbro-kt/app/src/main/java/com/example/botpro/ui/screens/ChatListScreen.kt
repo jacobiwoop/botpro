@@ -69,11 +69,16 @@ fun ChatListScreen(
             val sbChats = com.example.botpro.data.supabase.SupabaseService.fetchChats()
             if (sbChats.isNotEmpty()) {
                 val merged = mutableListOf<ChatItem>()
-                merged.addAll(sbChats)
-                // Conserver les autres conversations mockées pour la démo
+                val seenIds = mutableSetOf<String>()
+                sbChats.forEach { chat ->
+                    if (seenIds.add(chat.id)) {
+                        merged.add(chat)
+                    }
+                }
                 MockData.chatListData.forEach { defaultChat ->
-                    if (merged.none { it.name.equals(defaultChat.name, ignoreCase = true) }) {
-                        merged.add(defaultChat)
+                    val uniqueId = if (seenIds.contains(defaultChat.id)) "mock_${defaultChat.id}" else defaultChat.id
+                    if (seenIds.add(uniqueId) && merged.none { it.name.equals(defaultChat.name, ignoreCase = true) }) {
+                        merged.add(defaultChat.copy(id = uniqueId))
                     }
                 }
                 chatList = merged
@@ -149,14 +154,14 @@ fun ChatListScreen(
                 ) {
                     itemsIndexed(
                         items = chatList,
-                        key = { _, item -> item.id }
+                        key = { index, item -> "${item.id}_$index" }
                     ) { index, item ->
                         ChatItemRow(
                             item = item,
                             isLast = index == chatList.lastIndex,
                             onClick = {
                                 val initials = item.initials ?: item.name.take(2).uppercase()
-                                val parsedId = item.id.toLongOrNull()
+                                val parsedId = item.id.removePrefix("mock_").toLongOrNull()
                                 onOpenChat(item.name, initials, parsedId)
                             }
                         )
