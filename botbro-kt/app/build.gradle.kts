@@ -9,7 +9,7 @@ android {
     compileSdk = 36
     defaultConfig {
         applicationId = "com.example.botpro"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -63,6 +63,18 @@ dependencies {
   implementation(libs.androidx.compose.material3)
   implementation(libs.androidx.compose.material.icons.extended)
   implementation(libs.coil.compose)
+
+  // Supabase & Ktor
+  val supabaseBom = platform(libs.supabase.bom)
+  implementation(supabaseBom)
+  implementation(libs.supabase.postgrest)
+  implementation(libs.supabase.auth)
+  implementation(libs.supabase.realtime)
+  implementation(libs.supabase.functions)
+  implementation(libs.ktor.client.okhttp)
+  implementation(libs.ktor.client.core)
+  implementation(libs.kotlinx.serialization.json)
+
   // Tooling
   debugImplementation(libs.androidx.compose.ui.tooling)
   // Instrumented tests
@@ -84,3 +96,4 @@ dependencies {
   implementation(libs.androidx.navigation3.runtime)
   implementation(libs.androidx.lifecycle.viewmodel.navigation3)
 }
+

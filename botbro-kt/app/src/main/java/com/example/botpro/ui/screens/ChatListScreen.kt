@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ChatListScreen(
-    onOpenChat: (name: String, initials: String) -> Unit,
+    onOpenChat: (name: String, initials: String, chatId: Long?) -> Unit,
     onOpenBotFather: () -> Unit = {},
     onOpenAuth: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -55,7 +55,7 @@ fun ChatListScreen(
         mutableStateOf(memoryChats ?: MockData.chatListData)
     }
 
-    // 2. Stratégie SWR : Lecture disque L2 puis revalidation réseau
+    // 2. Stratégie SWR : Lecture disque L2 puis revalidation réseau depuis Supabase Cloud
     LaunchedEffect(Unit) {
         if (memoryChats == null) {
             val diskChats = ChatCache.getDiskCachedChats(context)
@@ -64,38 +64,41 @@ fun ChatListScreen(
             }
         }
 
-        // Revalidation en tâche de fond avec les bots disponibles
+        // Revalidation en tâche de fond avec les chats réels Supabase
         try {
-            val bots = ApiClient.fetchBots()
-            if (bots.isNotEmpty()) {
-                val botChats = bots.map { bot ->
-                    ChatItem(
-                        id = "bot_${bot.id}",
-                        name = bot.firstName,
-                        avatarType = AvatarType.INITIALS,
-                        avatarBg = "#5288C1",
-                        initials = bot.firstName.take(2).uppercase(),
-                        lastMessage = bot.about ?: "Tapez /start pour démarrer",
-                        time = "12:00",
-                        unreadCount = 0,
-                        isRead = true
-                    )
-                }
-
-                // Fusionner avec les conversations existantes pour éviter les doublons
+            val sbChats = com.example.botpro.data.supabase.SupabaseService.fetchChats()
+            if (sbChats.isNotEmpty()) {
                 val merged = mutableListOf<ChatItem>()
-                merged.addAll(botChats)
+                merged.addAll(sbChats)
+                // Conserver les autres conversations mockées pour la démo
                 MockData.chatListData.forEach { defaultChat ->
                     if (merged.none { it.name.equals(defaultChat.name, ignoreCase = true) }) {
                         merged.add(defaultChat)
                     }
                 }
-
                 chatList = merged
                 ChatCache.saveCachedChats(context, merged)
             }
         } catch (e: Exception) {
             // Conserver l'état actuel en cas d'erreur
+        }
+    }
+
+    // 3. Écoute en temps réel Supabase Realtime WebSocket
+    LaunchedEffect(Unit) {
+        com.example.botpro.data.supabase.SupabaseService.realtimeMessages.collect { (chatId, msg) ->
+            val currentList = chatList.toMutableList()
+            val chatIndex = currentList.indexOfFirst { it.id == chatId.toString() }
+            if (chatIndex >= 0) {
+                val existing = currentList.removeAt(chatIndex)
+                val updated = existing.copy(
+                    lastMessage = msg.text ?: "",
+                    time = msg.time
+                )
+                currentList.add(0, updated)
+                chatList = currentList
+                ChatCache.saveCachedChats(context, currentList)
+            }
         }
     }
 
@@ -117,16 +120,19 @@ fun ChatListScreen(
                 .background(TelegramColors.Base)
         ) {
             Column(
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
             ) {
-                // Barre d'en-tête avec couleur dédiée sous la barre d'état
+                // En-tête Telegram standard avec compteur non-lu et avatar
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(TelegramColors.Header)
-                        .statusBarsPadding()
+                        .background(TelegramColors.Primary)
                 ) {
                     TelegramHeader(
+                        title = "BotPro",
+                        unreadCount = chatList.sumOf { it.unreadCount },
                         onMenuClick = {
                             scope.launch { drawerState.open() }
                         },
@@ -152,7 +158,8 @@ fun ChatListScreen(
                             isLast = index == chatList.lastIndex,
                             onClick = {
                                 val initials = item.initials ?: item.name.take(2).uppercase()
-                                onOpenChat(item.name, initials)
+                                val parsedId = item.id.toLongOrNull()
+                                onOpenChat(item.name, initials, parsedId)
                             }
                         )
                     }
@@ -173,10 +180,11 @@ fun ChatListScreen(
             BotSearchModal(
                 visible = showSearchModal,
                 onClose = { showSearchModal = false },
-                onSelectBot = { _, botName, _ ->
+                onSelectBot = { chatIdStr, botName, _ ->
                     showSearchModal = false
                     val initials = botName.take(2).uppercase()
-                    onOpenChat(botName, initials)
+                    val parsedId = chatIdStr.toLongOrNull()
+                    onOpenChat(botName, initials, parsedId)
                 }
             )
         }

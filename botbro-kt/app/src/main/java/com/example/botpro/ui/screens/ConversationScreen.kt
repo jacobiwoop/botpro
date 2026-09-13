@@ -68,6 +68,7 @@ import java.util.Locale
 fun ConversationScreen(
     contactName: String = "Hernes Dav",
     contactInitials: String = "HE",
+    chatId: Long? = null,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -76,6 +77,14 @@ fun ConversationScreen(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val effectiveChatId = remember(contactName, chatId) {
+        chatId ?: when {
+            contactName.contains("aiko", ignoreCase = true) -> 1L
+            contactName.equals("BotFather", ignoreCase = true) -> 2L
+            else -> 1L
+        }
+    }
 
     // 1. Cache L1 synchrone à 0 ms
     val initialMemory = ChatCache.getMemoryCachedMessages(contactName)
@@ -88,16 +97,24 @@ fun ConversationScreen(
     var selectedImageUrl by remember { mutableStateOf<String?>(null) }
     var showAttachmentSheet by remember { mutableStateOf(false) }
 
-    // 2. Chargement SWR : Disque L2 -> Skeleton fluide si vide -> Enregistrement cache
-    LaunchedEffect(contactName) {
+    // 2. Chargement SWR : Disque L2 -> Supabase Cloud -> Enregistrement cache
+    LaunchedEffect(contactName, effectiveChatId) {
         if (initialMemory == null) {
             val diskMsgs = ChatCache.getDiskCachedMessages(context, contactName)
             if (diskMsgs.isNotEmpty()) {
                 messages = diskMsgs
                 isLoading = false
-            } else {
-                // Simuler un chargement réseau réaliste pour afficher le skeleton
-                delay(600)
+            }
+        }
+
+        // Récupération des messages réels depuis Supabase Cloud
+        try {
+            val remoteMsgs = com.example.botpro.data.supabase.SupabaseService.fetchMessages(effectiveChatId)
+            if (remoteMsgs.isNotEmpty()) {
+                messages = remoteMsgs
+                isLoading = false
+                ChatCache.saveCachedMessages(context, contactName, remoteMsgs)
+            } else if (messages.isEmpty()) {
                 val initialList = if (contactName == "BotFather") {
                     listOf(
                         Message(
@@ -126,6 +143,24 @@ fun ConversationScreen(
                 messages = initialList
                 isLoading = false
                 ChatCache.saveCachedMessages(context, contactName, initialList)
+            }
+        } catch (e: Exception) {
+            isLoading = false
+        }
+    }
+
+    // 3. Écoute des nouveaux messages en direct via Supabase Realtime WebSocket
+    LaunchedEffect(effectiveChatId) {
+        com.example.botpro.data.supabase.SupabaseService.realtimeMessages.collect { (msgChatId, msg) ->
+            if (msgChatId == effectiveChatId) {
+                if (messages.none { it.id == msg.id || (it.text == msg.text && it.isOutgoing == msg.isOutgoing && it.time == msg.time) }) {
+                    val updated = messages + msg
+                    messages = updated
+                    ChatCache.saveCachedMessages(context, contactName, updated)
+                    scope.launch {
+                        listState.animateScrollToItem(0)
+                    }
+                }
             }
         }
     }
@@ -181,8 +216,9 @@ fun ConversationScreen(
 
     val onSendMessage: (String) -> Unit = { text ->
         val currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
+        val localId = "msg_${System.currentTimeMillis()}"
         val newMessage = Message(
-            id = "msg_${System.currentTimeMillis()}",
+            id = localId,
             type = MessageType.TEXT,
             isOutgoing = true,
             text = text,
@@ -196,38 +232,47 @@ fun ConversationScreen(
             ChatCache.saveCachedMessages(context, contactName, updated)
             listState.animateScrollToItem(0)
 
-            // Réponse automatique de bot simulée (interaction Telegram)
-            val isBot = contactName.contains("bot", ignoreCase = true) ||
-                        contactName.contains("aiko", ignoreCase = true) ||
-                        contactName == "BotFather"
-
-            if (isBot) {
-                delay(700)
-                val replyText = when {
-                    contactName == "BotFather" && text.startsWith("/newbot") ->
-                        "Alright, a new bot. How are we going to call it? Please choose a name for your bot."
-                    contactName == "BotFather" ->
-                        "BotFather: commande reçue. Tapez /newbot pour créer un bot ou /mybots pour administrer."
-                    text.startsWith("/start") ->
-                        "🤖 Bot démarré avec succès ! Je suis à votre service."
-                    text.contains("vocal", ignoreCase = true) ->
-                        "🎙️ Message vocal bien reçu et analysé."
-                    else ->
-                        "✅ Reçu 5/5 : « $text »"
+            // Envoi réel vers Supabase Edge Function
+            val sentMsg = com.example.botpro.data.supabase.SupabaseService.sendUserMessage(effectiveChatId, text)
+            if (sentMsg != null) {
+                // Confirmer le message sortant avec double coche
+                messages = messages.map {
+                    if (it.id == localId) it.copy(isDoubleCheck = true, id = sentMsg.id) else it
                 }
+            } else {
+                // Fallback simulation locale si hors-ligne
+                val isBot = contactName.contains("bot", ignoreCase = true) ||
+                            contactName.contains("aiko", ignoreCase = true) ||
+                            contactName == "BotFather"
 
-                val botReply = Message(
-                    id = "bot_reply_${System.currentTimeMillis()}",
-                    type = MessageType.TEXT,
-                    isOutgoing = false,
-                    text = replyText,
-                    time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()),
-                    isRead = true
-                )
-                val withReply = messages + botReply
-                messages = withReply
-                ChatCache.saveCachedMessages(context, contactName, withReply)
-                listState.animateScrollToItem(0)
+                if (isBot) {
+                    delay(700)
+                    val replyText = when {
+                        contactName == "BotFather" && text.startsWith("/newbot") ->
+                            "Alright, a new bot. How are we going to call it? Please choose a name for your bot."
+                        contactName == "BotFather" ->
+                            "BotFather: commande reçue. Tapez /newbot pour créer un bot ou /mybots pour administrer."
+                        text.startsWith("/start") ->
+                            "🤖 Bot démarré avec succès ! Je suis à votre service."
+                        text.contains("vocal", ignoreCase = true) ->
+                            "🎙️ Message vocal bien reçu et analysé."
+                        else ->
+                            "✅ Reçu 5/5 : « $text »"
+                    }
+
+                    val botReply = Message(
+                        id = "bot_reply_${System.currentTimeMillis()}",
+                        type = MessageType.TEXT,
+                        isOutgoing = false,
+                        text = replyText,
+                        time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()),
+                        isRead = true
+                    )
+                    val withReply = messages + botReply
+                    messages = withReply
+                    ChatCache.saveCachedMessages(context, contactName, withReply)
+                    listState.animateScrollToItem(0)
+                }
             }
         }
     }

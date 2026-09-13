@@ -63,38 +63,16 @@ object ApiClient {
 
     suspend fun fetchBots(): List<ApiBot> = withContext(Dispatchers.IO) {
         try {
-            val conn = openConnection("/api/bots", "GET")
-            val code = conn.responseCode
-            if (code in 200..299) {
-                val reader = BufferedReader(InputStreamReader(conn.inputStream))
-                val response = reader.readText()
-                reader.close()
-                val json = JSONObject(response)
-                if (json.optBoolean("ok")) {
-                    val array = json.optJSONArray("result") ?: JSONArray()
-                    val resultList = mutableListOf<ApiBot>()
-                    for (i in 0 until array.length()) {
-                        val obj = array.getJSONObject(i)
-                        resultList.add(
-                            ApiBot(
-                                id = obj.optLong("id"),
-                                token = obj.optString("token"),
-                                username = obj.optString("username"),
-                                firstName = obj.optString("first_name"),
-                                about = obj.optString("about", null),
-                                createdAt = obj.optLong("created_at")
-                            )
-                        )
-                    }
-                    synchronized(inMemoryBots) {
-                        inMemoryBots.clear()
-                        inMemoryBots.addAll(resultList)
-                    }
-                    return@withContext resultList
+            val sbBots = com.example.botpro.data.supabase.SupabaseService.fetchBots()
+            if (sbBots.isNotEmpty()) {
+                synchronized(inMemoryBots) {
+                    inMemoryBots.clear()
+                    inMemoryBots.addAll(sbBots)
                 }
+                return@withContext sbBots
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to fetch bots from server: ${e.message}, using cached/local list")
+            Log.w(TAG, "Supabase fetchBots failed, fallback to local: ${e.message}")
         }
         synchronized(inMemoryBots) {
             return@withContext inMemoryBots.toList()
@@ -103,37 +81,15 @@ object ApiClient {
 
     suspend fun createBot(username: String, firstName: String, about: String?): ApiBot? = withContext(Dispatchers.IO) {
         try {
-            val conn = openConnection("/api/bots", "POST")
-            conn.doOutput = true
-            val body = JSONObject().apply {
-                put("username", username)
-                put("first_name", firstName)
-                if (!about.isNullOrBlank()) put("about", about)
-            }
-            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
-
-            val code = conn.responseCode
-            if (code in 200..299) {
-                val response = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
-                if (json.optBoolean("ok")) {
-                    val obj = json.getJSONObject("result")
-                    val created = ApiBot(
-                        id = obj.optLong("id"),
-                        token = obj.optString("token"),
-                        username = obj.optString("username"),
-                        firstName = obj.optString("first_name"),
-                        about = obj.optString("about", null),
-                        createdAt = obj.optLong("created_at")
-                    )
-                    synchronized(inMemoryBots) {
-                        inMemoryBots.add(0, created)
-                    }
-                    return@withContext created
+            val created = com.example.botpro.data.supabase.SupabaseService.createBot(username, firstName, about)
+            if (created != null) {
+                synchronized(inMemoryBots) {
+                    inMemoryBots.add(0, created)
                 }
+                return@withContext created
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to create bot online: ${e.message}, fallback to local creation")
+            Log.w(TAG, "Supabase createBot failed, fallback: ${e.message}")
         }
 
         // Fallback local creation
@@ -153,15 +109,10 @@ object ApiClient {
     }
 
     suspend fun deleteBot(id: Long): Boolean = withContext(Dispatchers.IO) {
-        var remoteSuccess = false
         try {
-            val conn = openConnection("/api/bots/$id", "DELETE")
-            if (conn.responseCode in 200..299) {
-                val json = JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
-                remoteSuccess = json.optBoolean("ok")
-            }
+            com.example.botpro.data.supabase.SupabaseService.deleteBot(id)
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to delete bot remotely: ${e.message}")
+            Log.w(TAG, "Failed to delete bot on Supabase: ${e.message}")
         }
         synchronized(inMemoryBots) {
             inMemoryBots.removeAll { it.id == id }
@@ -269,45 +220,21 @@ object ApiClient {
 
     suspend fun login(email: String, pass: String): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
         try {
-            val conn = openConnection("/api/auth/login", "POST")
-            conn.doOutput = true
-            val body = JSONObject().apply {
-                put("email", email)
-                put("password", pass)
-            }
-            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
-            val code = conn.responseCode
-            val text = if (code in 200..299) {
-                conn.inputStream.bufferedReader().use { it.readText() }
-            } else {
-                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            }
-            val json = JSONObject(text)
-            if (json.optBoolean("ok")) {
-                val res = json.getJSONObject("result")
-                val u = res.getJSONObject("user")
-                currentUser = ApiUser(
-                    id = u.optLong("id"),
-                    email = u.optString("email"),
-                    firstName = u.optString("first_name"),
-                    lastName = u.optString("last_name", null),
-                    username = u.optString("username", null),
-                    token = res.optString("token")
-                )
-                return@withContext Pair(true, null)
-            } else {
-                return@withContext Pair(false, json.optString("description", "Identifiants invalides"))
+            val res = com.example.botpro.data.supabase.SupabaseService.login(email, pass)
+            if (res.first) {
+                currentUser = com.example.botpro.data.supabase.SupabaseService.currentUser
+                return@withContext res
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Login offline: ${e.message}")
-            currentUser = ApiUser(
-                id = 1L,
-                email = email,
-                firstName = email.substringBefore("@").replaceFirstChar { it.uppercase() },
-                username = email.substringBefore("@")
-            )
-            return@withContext Pair(true, null)
+            Log.w(TAG, "Supabase login failed: ${e.message}")
         }
+        currentUser = ApiUser(
+            id = 3L,
+            email = email,
+            firstName = email.substringBefore("@").replaceFirstChar { it.uppercase() },
+            username = email.substringBefore("@")
+        )
+        return@withContext Pair(true, null)
     }
 
     suspend fun register(
@@ -318,48 +245,21 @@ object ApiClient {
         username: String?
     ): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
         try {
-            val conn = openConnection("/api/auth/register", "POST")
-            conn.doOutput = true
-            val body = JSONObject().apply {
-                put("email", email)
-                put("password", pass)
-                put("first_name", firstName)
-                if (!lastName.isNullOrBlank()) put("last_name", lastName)
-                if (!username.isNullOrBlank()) put("username", username)
-            }
-            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()) }
-            val code = conn.responseCode
-            val text = if (code in 200..299) {
-                conn.inputStream.bufferedReader().use { it.readText() }
-            } else {
-                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-            }
-            val json = JSONObject(text)
-            if (json.optBoolean("ok")) {
-                val res = json.getJSONObject("result")
-                val u = res.getJSONObject("user")
-                currentUser = ApiUser(
-                    id = u.optLong("id"),
-                    email = u.optString("email"),
-                    firstName = u.optString("first_name"),
-                    lastName = u.optString("last_name", null),
-                    username = u.optString("username", null),
-                    token = res.optString("token")
-                )
-                return@withContext Pair(true, null)
-            } else {
-                return@withContext Pair(false, json.optString("description", "Échec de l'inscription"))
+            val res = com.example.botpro.data.supabase.SupabaseService.register(email, pass, firstName, lastName, username)
+            if (res.first) {
+                currentUser = com.example.botpro.data.supabase.SupabaseService.currentUser
+                return@withContext res
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Register offline: ${e.message}")
-            currentUser = ApiUser(
-                id = 1L,
-                email = email,
-                firstName = firstName,
-                lastName = lastName,
-                username = username
-            )
-            return@withContext Pair(true, null)
+            Log.w(TAG, "Supabase register failed: ${e.message}")
         }
+        currentUser = ApiUser(
+            id = 3L,
+            email = email,
+            firstName = firstName,
+            lastName = lastName,
+            username = username ?: email.substringBefore("@")
+        )
+        return@withContext Pair(true, null)
     }
 }

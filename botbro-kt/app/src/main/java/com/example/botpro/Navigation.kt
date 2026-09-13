@@ -51,6 +51,7 @@ fun MainNavigation() {
                 ConversationScreen(
                     contactName = key.name,
                     contactInitials = key.initials,
+                    chatId = key.chatId,
                     onBack = {
                         if (backStack.size > 1) {
                             backStack.removeLastOrNull()
@@ -85,8 +86,8 @@ fun MainNavigation() {
             }
             else -> {
                 ChatListScreen(
-                    onOpenChat = { name, initials ->
-                        backStack.add(ConversationNavKey(name = name, initials = initials))
+                    onOpenChat = { name, initials, chatId ->
+                        backStack.add(ConversationNavKey(name = name, initials = initials, chatId = chatId))
                     },
                     onOpenBotFather = {
                         backStack.add(BotFatherNavKey())

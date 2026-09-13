@@ -9,7 +9,8 @@ data object ChatListNavKey : NavKey
 @Serializable
 data class ConversationNavKey(
     val name: String,
-    val initials: String
+    val initials: String,
+    val chatId: Long? = null
 ) : NavKey
 
 @Serializable
