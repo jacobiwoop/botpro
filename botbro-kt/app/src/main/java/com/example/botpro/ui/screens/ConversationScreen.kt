@@ -434,7 +434,6 @@ fun ConversationScreen(
                     AttachmentType.CAMERA -> {
                         // Action prise de photo caméra
                     }
-                    else -> {}
                 }
             }
         )

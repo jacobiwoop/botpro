@@ -4,6 +4,7 @@ enum class MessageType {
     TEXT,
     FILE,
     IMAGE,
+    VOICE,
     DATE_SEPARATOR
 }
 

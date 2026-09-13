@@ -160,7 +160,7 @@ fun MessageBubble(
                     }
                 }
             }
-        } else if (message.type == MessageType.FILE && message.file != null) {
+        } else if ((message.type == MessageType.FILE || message.type == MessageType.VOICE) && message.file != null) {
             // Carte fichier / photo
             Row(
                 modifier = Modifier

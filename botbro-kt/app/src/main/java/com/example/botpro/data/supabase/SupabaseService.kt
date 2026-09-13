@@ -586,7 +586,7 @@ object SupabaseService {
                         hasCustomCertificate = res.optBoolean("has_custom_certificate", false),
                         pendingUpdateCount = res.optInt("pending_update_count", 0),
                         lastErrorDate = if (res.has("last_error_date")) res.optLong("last_error_date") else null,
-                        lastErrorMessage = res.optString("last_error_message", null)
+                        lastErrorMessage = if (res.has("last_error_message")) res.optString("last_error_message") else null
                     )
                 }
             }
