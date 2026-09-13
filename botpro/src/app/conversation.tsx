@@ -9,7 +9,7 @@ import {
   Platform,
   Keyboard,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ConversationHeader } from '@/components/telegram/ConversationHeader';
 import { MessageBubble } from '@/components/telegram/MessageBubble';
@@ -55,7 +55,30 @@ export default function ConversationScreen() {
   const [messages, setMessages] = useState<Message[]>(
     initialCache ? formatApiMessages(initialCache) : []
   );
-  const [loading, setLoading] = useState(!initialCache || initialCache.length === 0);
+  const [loading, setLoading] = useState(!initialCache);
+  const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        setKeyboardVisible(true);
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const flatListRef = useRef<FlatList>(null);
 
   // Charger les messages réels depuis le disque L2 puis synchroniser avec Supabase
@@ -203,7 +226,6 @@ export default function ConversationScreen() {
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         {/* Fil des messages aligné par le bas (style Telegram) */}
         {loading ? (
@@ -242,7 +264,12 @@ export default function ConversationScreen() {
         )}
 
         {/* Barre de saisie ou Bouton DÉMARRER style Telegram */}
-        <SafeAreaView edges={['bottom']} style={styles.bottomSafeArea}>
+        <View
+          style={[
+            styles.bottomSafeArea,
+            { paddingBottom: keyboardVisible ? 0 : Math.max(insets.bottom, 4) },
+          ]}
+        >
           {!loading && messages.length === 0 ? (
             <View style={styles.startBarContainer}>
               <TouchableOpacity
@@ -256,7 +283,7 @@ export default function ConversationScreen() {
           ) : (
             <ChatInputBar onSendMessage={handleSendMessage} />
           )}
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
