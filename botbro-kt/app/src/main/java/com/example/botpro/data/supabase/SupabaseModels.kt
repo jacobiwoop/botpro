@@ -40,6 +40,47 @@ data class InsertBotRow(
 )
 
 @Serializable
+data class InsertBotRowWithId(
+    val id: Long,
+    val token: String,
+    val description: String,
+    @SerialName("owner_id") val ownerId: Long? = null
+)
+
+@Serializable
+data class UpdateBotTokenRow(
+    val token: String
+)
+
+@Serializable
+data class InsertUserRow(
+    val username: String,
+    @SerialName("first_name") val firstName: String,
+    @SerialName("is_bot") val isBot: Boolean = true
+)
+
+@Serializable
+data class InsertChatRow(
+    val type: String = "private",
+    val title: String? = null,
+    val username: String? = null
+)
+
+@Serializable
+data class InsertChatMemberRow(
+    @SerialName("chat_id") val chatId: Long,
+    @SerialName("user_id") val userId: Long,
+    val role: String = "member"
+)
+
+@Serializable
+data class SupabaseChatMemberRow(
+    @SerialName("chat_id") val chatId: Long,
+    @SerialName("user_id") val userId: Long,
+    val role: String? = null
+)
+
+@Serializable
 data class SupabaseUserRow(
     val id: Long,
     @SerialName("auth_user_id") val authUserId: String? = null,

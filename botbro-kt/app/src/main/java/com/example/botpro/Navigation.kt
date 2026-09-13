@@ -66,8 +66,8 @@ fun MainNavigation() {
                             backStack.removeLastOrNull()
                         }
                     },
-                    onOpenChatWithBot = { botName, botInitials ->
-                        backStack.add(ConversationNavKey(name = botName, initials = botInitials))
+                    onOpenChatWithBot = { botName, botInitials, chatId ->
+                        backStack.add(ConversationNavKey(name = botName, initials = botInitials, chatId = chatId))
                     }
                 )
             }

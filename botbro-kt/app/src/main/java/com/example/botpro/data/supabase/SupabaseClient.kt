@@ -11,7 +11,8 @@ object SupabaseClientProvider {
     const val SUPABASE_URL = "https://lsxoakzcxllxmcxeieyg.supabase.co"
     const val SUPABASE_ANON_KEY =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzeG9ha3pjeGxseG1jeGVpZXlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyMDM4MjAsImV4cCI6MjEwNDc3OTgyMH0.TRM78TqKVgz6YwHKIaiE8VPIRi-iyJYu8LLeIArhbDk"
-    const val DISPATCH_URL = "$SUPABASE_URL/functions/v1/telegram-api/dispatch-user-message"
+    const val TELEGRAM_EDGE_URL = "$SUPABASE_URL/functions/v1/telegram-api"
+    const val DISPATCH_URL = "$TELEGRAM_EDGE_URL/dispatch-user-message"
 
     val client: SupabaseClient by lazy {
         createSupabaseClient(

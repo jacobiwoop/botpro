@@ -219,7 +219,14 @@ fun BotSearchModal(
                                     .fillMaxWidth()
                                     .clickable {
                                         onClose()
-                                        onSelectBot(bot.id.toString(), bot.firstName, bot.username)
+                                        scope.launch {
+                                            val chatId = com.example.botpro.data.supabase.SupabaseService.getOrCreateBotChat(
+                                                bot.id,
+                                                bot.firstName,
+                                                bot.username
+                                            )
+                                            onSelectBot(chatId.toString(), bot.firstName, bot.username)
+                                        }
                                     }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically

@@ -7,6 +7,7 @@ import com.example.botpro.data.model.Message
 import com.example.botpro.data.model.MessageType
 import com.example.botpro.data.models.ApiBot
 import com.example.botpro.data.models.ApiUser
+import com.example.botpro.data.models.ApiWebhookInfo
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.postgrest.from
@@ -289,12 +290,21 @@ object SupabaseService {
         try {
             val client = SupabaseClientProvider.client
             val bots = client.from("bots").select().decodeList<SupabaseBotRow>()
+            val users = try {
+                client.from("users").select().decodeList<SupabaseUserRow>()
+            } catch (e: Exception) {
+                Log.w(TAG, "Error fetching users for bots: ${e.message}")
+                emptyList()
+            }
+            val usersMap = users.associateBy { it.id }
+
             bots.map { b ->
+                val u = usersMap[b.id]
                 ApiBot(
                     id = b.id,
                     token = b.token,
-                    username = if (b.id == 1L) "BotFather" else "aikobot",
-                    firstName = if (b.id == 1L) "BotFather" else "Aiko AI",
+                    username = u?.username ?: (if (b.id == 1L) "BotFather" else "bot_${b.id}"),
+                    firstName = u?.firstName ?: (if (b.id == 1L) "BotFather" else "Bot"),
                     about = b.description ?: ""
                 )
             }
@@ -307,12 +317,25 @@ object SupabaseService {
     suspend fun createBot(username: String, firstName: String, about: String?): ApiBot? = withContext(Dispatchers.IO) {
         try {
             val client = SupabaseClientProvider.client
-            val cleanUser = username.lowercase().replace("@", "").trim()
+            val cleanUser = username.lowercase().replace("@", "").replace(" ", "").trim()
             val finalUser = if (cleanUser.endsWith("bot")) cleanUser else "${cleanUser}_bot"
             val token = "bot_${System.currentTimeMillis()}_${(1000..9999).random()}"
 
+            // 1. Créer l'utilisateur bot dans la table 'users'
+            val botUser = client.from("users").insert(
+                InsertUserRow(
+                    username = finalUser,
+                    firstName = firstName,
+                    isBot = true
+                )
+            ) {
+                select()
+            }.decodeSingle<SupabaseUserRow>()
+
+            // 2. Insérer dans la table 'bots' avec id = botUser.id
             val created = client.from("bots").insert(
-                InsertBotRow(
+                InsertBotRowWithId(
+                    id = botUser.id,
                     token = token,
                     description = about ?: "Bot créé via BotFather",
                     ownerId = currentUser.id
@@ -324,9 +347,9 @@ object SupabaseService {
             ApiBot(
                 id = created.id,
                 token = created.token,
-                username = finalUser,
-                firstName = firstName,
-                about = about
+                username = botUser.username ?: finalUser,
+                firstName = botUser.firstName ?: firstName,
+                about = about ?: ""
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error createBot on Supabase: ${e.message}", e)
@@ -346,6 +369,177 @@ object SupabaseService {
         } catch (e: Exception) {
             Log.e(TAG, "Error deleteBot $id: ${e.message}", e)
             false
+        }
+    }
+
+    suspend fun revokeBotToken(id: Long): String? = withContext(Dispatchers.IO) {
+        try {
+            val client = SupabaseClientProvider.client
+            val newToken = "bot_${System.currentTimeMillis()}_${(1000..9999).random()}"
+            client.from("bots").update(
+                UpdateBotTokenRow(token = newToken)
+            ) {
+                filter {
+                    eq("id", id)
+                }
+            }
+            newToken
+        } catch (e: Exception) {
+            Log.e(TAG, "Error revoking token for bot $id: ${e.message}", e)
+            null
+        }
+    }
+
+    suspend fun getOrCreateBotChat(botId: Long, botName: String, botUsername: String): Long = withContext(Dispatchers.IO) {
+        try {
+            val client = SupabaseClientProvider.client
+            val currentUserId = currentUser.id
+
+            // 1. Chercher les chats de l'utilisateur actuel
+            val myMemberships = client.from("chat_members").select {
+                filter {
+                    eq("user_id", currentUserId)
+                }
+            }.decodeList<SupabaseChatMemberRow>()
+
+            if (myMemberships.isNotEmpty()) {
+                val myChatIds = myMemberships.map { it.chatId }.toSet()
+                // 2. Chercher les chats du bot
+                val botMemberships = client.from("chat_members").select {
+                    filter {
+                        eq("user_id", botId)
+                    }
+                }.decodeList<SupabaseChatMemberRow>()
+
+                val common = botMemberships.firstOrNull { it.chatId in myChatIds }
+                if (common != null) {
+                    return@withContext common.chatId
+                }
+            }
+
+            // 3. Pas de chat trouvé : en créer un nouveau
+            val newChat = client.from("chats").insert(
+                InsertChatRow(
+                    type = "private",
+                    title = botName,
+                    username = botUsername
+                )
+            ) {
+                select()
+            }.decodeSingle<SupabaseChatRow>()
+
+            // 4. Insérer les deux participants dans chat_members
+            client.from("chat_members").insert(
+                listOf(
+                    InsertChatMemberRow(chatId = newChat.id, userId = currentUserId, role = "creator"),
+                    InsertChatMemberRow(chatId = newChat.id, userId = botId, role = "member")
+                )
+            )
+
+            newChat.id
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getOrCreateBotChat for bot $botId: ${e.message}", e)
+            1L
+        }
+    }
+
+    suspend fun fetchWebhookInfo(botToken: String): ApiWebhookInfo? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("${SupabaseClientProvider.TELEGRAM_EDGE_URL}/bot$botToken/getWebhookInfo")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 6000
+            conn.readTimeout = 6000
+            conn.setRequestProperty("apikey", SupabaseClientProvider.SUPABASE_ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer ${SupabaseClientProvider.SUPABASE_ANON_KEY}")
+            if (conn.responseCode in 200..299) {
+                val json = org.json.JSONObject(conn.inputStream.bufferedReader().use { it.readText() })
+                if (json.optBoolean("ok")) {
+                    val res = json.optJSONObject("result") ?: org.json.JSONObject()
+                    return@withContext ApiWebhookInfo(
+                        url = res.optString("url", ""),
+                        hasCustomCertificate = res.optBoolean("has_custom_certificate", false),
+                        pendingUpdateCount = res.optInt("pending_update_count", 0),
+                        lastErrorDate = if (res.has("last_error_date")) res.optLong("last_error_date") else null,
+                        lastErrorMessage = res.optString("last_error_message", null)
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to get webhook info from Edge: ${e.message}")
+        }
+        null
+    }
+
+    suspend fun setBotWebhook(
+        botToken: String,
+        url: String,
+        secretToken: String?,
+        dropPendingUpdates: Boolean
+    ): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
+        try {
+            val conn = URL("${SupabaseClientProvider.TELEGRAM_EDGE_URL}/bot$botToken/setWebhook").openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 6000
+            conn.readTimeout = 6000
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+            conn.setRequestProperty("apikey", SupabaseClientProvider.SUPABASE_ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer ${SupabaseClientProvider.SUPABASE_ANON_KEY}")
+            conn.doOutput = true
+
+            val body = org.json.JSONObject().apply {
+                put("url", url)
+                if (!secretToken.isNullOrBlank()) put("secret_token", secretToken)
+                put("drop_pending_updates", dropPendingUpdates)
+            }
+            OutputStreamWriter(conn.outputStream, "UTF-8").use { it.write(body.toString()) }
+            val code = conn.responseCode
+            val text = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            }
+            val json = org.json.JSONObject(text)
+            val ok = json.optBoolean("ok", false)
+            val desc = json.optString("description", if (ok) "Webhook configuré avec succès" else "Erreur")
+            Pair(ok, desc)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setBotWebhook: ${e.message}", e)
+            Pair(false, e.message ?: "Erreur réseau")
+        }
+    }
+
+    suspend fun deleteBotWebhook(
+        botToken: String,
+        dropPendingUpdates: Boolean
+    ): Pair<Boolean, String?> = withContext(Dispatchers.IO) {
+        try {
+            val conn = URL("${SupabaseClientProvider.TELEGRAM_EDGE_URL}/bot$botToken/deleteWebhook").openConnection() as HttpURLConnection
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 6000
+            conn.readTimeout = 6000
+            conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+            conn.setRequestProperty("apikey", SupabaseClientProvider.SUPABASE_ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer ${SupabaseClientProvider.SUPABASE_ANON_KEY}")
+            conn.doOutput = true
+
+            val body = org.json.JSONObject().apply {
+                put("drop_pending_updates", dropPendingUpdates)
+            }
+            OutputStreamWriter(conn.outputStream, "UTF-8").use { it.write(body.toString()) }
+            val code = conn.responseCode
+            val text = if (code in 200..299) {
+                conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+            }
+            val json = org.json.JSONObject(text)
+            val ok = json.optBoolean("ok", false)
+            val desc = json.optString("description", if (ok) "Webhook supprimé avec succès" else "Erreur")
+            Pair(ok, desc)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleteBotWebhook: ${e.message}", e)
+            Pair(false, e.message ?: "Erreur réseau")
         }
     }
 }

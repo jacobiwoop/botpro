@@ -104,7 +104,7 @@ private fun getAvatarColor(name: String): Color {
 @Composable
 fun BotFatherScreen(
     onBack: () -> Unit,
-    onOpenChatWithBot: (botName: String, botInitials: String) -> Unit,
+    onOpenChatWithBot: (botName: String, botInitials: String, chatId: Long?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -684,8 +684,15 @@ fun BotFatherScreen(
                 // Bouton Tester le Bot / Ouvrir la discussion
                 Button(
                     onClick = {
-                        val initials = bot.firstName.take(2).uppercase().ifEmpty { "BT" }
-                        onOpenChatWithBot(bot.firstName, initials)
+                        coroutineScope.launch {
+                            val chatId = com.example.botpro.data.supabase.SupabaseService.getOrCreateBotChat(
+                                bot.id,
+                                bot.firstName,
+                                bot.username
+                            )
+                            val initials = bot.firstName.take(2).uppercase().ifEmpty { "BT" }
+                            onOpenChatWithBot(bot.firstName, initials, chatId)
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
